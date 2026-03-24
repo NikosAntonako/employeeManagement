@@ -10,7 +10,7 @@ namespace employeeManagement.Controllers
         private static readonly List<Employee> Employees = new();
 
         /// <summary>
-        /// Retrieves all employees.GET /api/employees
+        /// GET /api/employees
         /// </summary>
         /// <returns>An enumerable collection of all employees. The collection will be empty if no employees are available.</returns>
         [HttpGet("/api/employees")]
@@ -22,8 +22,7 @@ namespace employeeManagement.Controllers
         /// <summary>
         /// GET /api/employees/{id}
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <returns>The employee of the requested id.</returns>
         [HttpGet("/api/employees{id}")]
         public ActionResult<Employee> GetById(int id)
         {
@@ -36,9 +35,6 @@ namespace employeeManagement.Controllers
         /// <summary>
         /// Creates a new employee and adds it to the collection.
         /// </summary>
-        /// <remarks>The employee's identifier is assigned automatically. The response includes a 201
-        /// Created status code if successful.</remarks>
-        /// <param name="employee">The employee to add. The employee's properties, except for the identifier, should be set by the caller.</param>
         /// <returns>An ActionResult containing the created employee and a location header with the URI of the new resource.</returns>
         [HttpPost("/api/employees")]
         public ActionResult<Employee> Create(Employee employee)
@@ -49,11 +45,8 @@ namespace employeeManagement.Controllers
         }
 
         /// <summary>
-        /// PUT /api/employees/{id}
+        /// Updates employee data of requested id
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="updatedEmployee"></param>
-        /// <returns></returns>
         [HttpPut("/api/employees/{id}")]
         public ActionResult<Employee> Update(int id, Employee updatedEmployee)
         {
@@ -70,10 +63,8 @@ namespace employeeManagement.Controllers
         }
 
         /// <summary>
-        /// DELETE /api/employees/{id}
+        /// Deletes employee of requested id
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         [HttpDelete("/api/employees/{id}")]
         public ActionResult<Employee> Delete(int id)
         {
