@@ -1,5 +1,6 @@
 using employeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace employeeManagement.Controllers
 {
@@ -7,22 +8,28 @@ namespace employeeManagement.Controllers
     [Route("[controller]")]
     public class EmployeeController : ControllerBase
     {
-        private static readonly List<Employee> Employees = [];
+        private readonly EmployeeContext _context;
+
+        public EmployeeController(EmployeeContext context)
+        {
+            _context = context;
+        }
 
         /// <summary>
         /// GET /api/employees
         /// </summary>
         /// <returns>An enumerable collection of all employees. The collection will be empty if no employees are available.</returns>
         [HttpGet("/api/employees")]
-        public ActionResult<IEnumerable<Employee>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<Employee>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             if (pageNumber < 1 || pageSize < 1)
                 return BadRequest(new { message = "pageNumber and pageSize must be greater than 0" });
 
-            var pagedEmployees = Employees
+            var pagedEmployees = await _context.Employees
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
+
             return Ok(pagedEmployees);
         }
 
@@ -31,11 +38,12 @@ namespace employeeManagement.Controllers
         /// </summary>
         /// <returns>The employee of the requested id.</returns>
         [HttpGet("/api/employees/{id}")]
-        public ActionResult<Employee> GetById(int id)
+        public async Task<ActionResult<Employee>> GetById(int id)
         {
-            var employee = Employees.FirstOrDefault(e => e.Id == id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found.", id });
+
             return employee;
         }
 
@@ -44,10 +52,11 @@ namespace employeeManagement.Controllers
         /// </summary>
         /// <returns>An ActionResult containing the created employee and a location header with the URI of the new resource.</returns>
         [HttpPost("/api/employees")]
-        public ActionResult<Employee> Create(Employee employee)
+        public async Task<ActionResult<Employee>> Create(Employee employee)
         {
-            employee.Id = Employees.Count > 0 ? Employees.Max(e => e.Id) + 1 : 1;
-            Employees.Add(employee);
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
         }
 
@@ -55,9 +64,9 @@ namespace employeeManagement.Controllers
         /// Updates employee data of requested id
         /// </summary>
         [HttpPut("/api/employees/{id}")]
-        public ActionResult<Employee> Update(int id, Employee updatedEmployee)
+        public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
-            var employee = Employees.FirstOrDefault(e => e.Id == id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound();
 
@@ -66,6 +75,8 @@ namespace employeeManagement.Controllers
             employee.Department = updatedEmployee.Department;
             employee.Salary = updatedEmployee.Salary;
 
+            await _context.SaveChangesAsync();
+
             return Ok(employee);
         }
 
@@ -73,13 +84,15 @@ namespace employeeManagement.Controllers
         /// Deletes employee of requested id
         /// </summary>
         [HttpDelete("/api/employees/{id}")]
-        public ActionResult<Employee> Delete(int id)
+        public async Task<ActionResult<Employee>> Delete(int id)
         {
-            var employee = Employees.FirstOrDefault(e => e.Id == id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found", id });
 
-            Employees.Remove(employee);
+            _context.Employees.Remove(employee);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }

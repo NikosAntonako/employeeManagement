@@ -1,8 +1,8 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
-/// GET /api/employees?pageNumber=1&pageSize=2
+/// GET /api/employees?pageNumber=1&pageSize=10
 /// Should return 200 OK with first 2 employees
-GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=2&pageSize=10
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=1&pageSize=10
 Accept: application/json
 ###
 
@@ -49,10 +49,10 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "Nick Ant",
+  "name": "Maria",
   "position": "Developer",
   "department": "DevOps",
-  "salary": 50000
+  "salary": 70000
 }
 ###
 
