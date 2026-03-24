@@ -7,7 +7,7 @@ namespace employeeManagement.Controllers
     [Route("[controller]")]
     public class EmployeeController : ControllerBase
     {
-        private static readonly List<Employee> Employees = new();
+        private static readonly List<Employee> Employees = [];
 
         /// <summary>
         /// GET /api/employees
