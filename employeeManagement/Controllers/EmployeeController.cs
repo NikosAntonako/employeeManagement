@@ -14,16 +14,23 @@ namespace employeeManagement.Controllers
         /// </summary>
         /// <returns>An enumerable collection of all employees. The collection will be empty if no employees are available.</returns>
         [HttpGet("/api/employees")]
-        public IEnumerable<Employee> GetAll()
+        public ActionResult<IEnumerable<Employee>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            return Employees;
+            if (pageNumber < 1 || pageSize < 1)
+                return BadRequest(new { message = "pageNumber and pageSize must be greater than 0" });
+
+            var pagedEmployees = Employees
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+            return Ok(pagedEmployees);
         }
 
         /// <summary>
         /// GET /api/employees/{id}
         /// </summary>
         /// <returns>The employee of the requested id.</returns>
-        [HttpGet("/api/employees{id}")]
+        [HttpGet("/api/employees/{id}")]
         public ActionResult<Employee> GetById(int id)
         {
             var employee = Employees.FirstOrDefault(e => e.Id == id);

@@ -1,8 +1,32 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
-/// GET /api/employees
-/// Should return 200 OK with all employees
-GET {{employeeManagement_HostAddress}}/api/employees
+/// GET /api/employees?pageNumber=1&pageSize=2
+/// Should return 200 OK with first 2 employees
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=1&pageSize=2
+Accept: application/json
+###
+
+/// GET /api/employees?pageNumber=0&pageSize=2
+/// Should return 400 Bad Request (invalid pageNumber)
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=0&pageSize=2
+Accept: application/json
+###
+
+/// GET /api/employees?pageNumber=1&pageSize=0
+/// Should return 400 Bad Request (invalid pageSize)
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=1&pageSize=0
+Accept: application/json
+###
+
+/// GET /api/employees?pageNumber=1&pageSize=2
+/// Should return 400 Bad Request (negative pageNumber)
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=-1&pageSize=2
+Accept: application/json
+###
+
+/// GET /api/employees?pageNumber=1&pageSize=-5
+/// Should return 400 Bad Request (negative pageSize)
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=1&pageSize=-5
 Accept: application/json
 ###
 
