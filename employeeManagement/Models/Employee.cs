@@ -4,7 +4,7 @@ namespace employeeManagement.Models
 {
     public class Employee
     {
-        public required int Id { get; set; }
+        public int Id { get; set; }
         public required string Name { get; set; }
         public required string Position { get; set; }
         public required string Department { get; set; }
