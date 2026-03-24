@@ -4,7 +4,9 @@ namespace employeeManagement.Models
 {
     public class Employee
     {
-        public required int Id { get; set; }
+        // Id is being set server side from Controller automatically
+        // Cannot be set by POST, safe to not be required
+        public int Id { get; set; }
         public required string Name { get; set; }
         public required string Position { get; set; }
         public required string Department { get; set; }
