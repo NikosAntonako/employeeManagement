@@ -1,0 +1,52 @@
+@employeeManagement_HostAddress = https://localhost:7105
+
+### POST new employee (success)
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Maria",
+  "position": "Developer",
+  "department": "DevOps",
+  "salary": 70000
+}
+###
+
+### POST new employee (missing name)
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+Accept: application/json
+
+{
+  "position": "Developer",
+  "department": "DevOps",
+  "salary": 50000
+}
+###
+
+### POST new employee (null name)
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": null,
+  "position": "Developer",
+  "department": "DevOps",
+  "salary": 50000
+}
+###
+
+### POST new employee (invalid salary)
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Nick Ant",
+  "position": "Developer",
+  "department": "DevOps",
+  "salary": -100
+}
+###

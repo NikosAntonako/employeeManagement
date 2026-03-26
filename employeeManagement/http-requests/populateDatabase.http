@@ -1,0 +1,301 @@
+@employeeManagement_HostAddress = https://localhost:7105
+
+### Create employee 1
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Alice Johnson",
+  "position": "Developer",
+  "department": "IT",
+  "salary": 65000
+}
+###
+
+### Create employee 2
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Bob Smith",
+  "position": "Manager",
+  "department": "HR",
+  "salary": 80000
+}
+###
+
+### Create employee 3
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Carol Lee",
+  "position": "Analyst",
+  "department": "Finance",
+  "salary": 72000
+}
+###
+
+### Create employee 4
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "David Kim",
+  "position": "Designer",
+  "department": "Marketing",
+  "salary": 60000
+}
+###
+
+### Create employee 5
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Eva Brown",
+  "position": "QA Engineer",
+  "department": "IT",
+  "salary": 67000
+}
+###
+
+### Create employee 6
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Frank Green",
+  "position": "Support",
+  "department": "Customer Service",
+  "salary": 50000
+}
+###
+
+### Create employee 7
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Grace Miller",
+  "position": "Developer",
+  "department": "IT",
+  "salary": 69000
+}
+###
+
+### Create employee 8
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Henry Wilson",
+  "position": "Manager",
+  "department": "Sales",
+  "salary": 85000
+}
+###
+
+### Create employee 9
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Ivy Clark",
+  "position": "Analyst",
+  "department": "Finance",
+  "salary": 71000
+}
+###
+
+### Create employee 10
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Jack White",
+  "position": "Developer",
+  "department": "IT",
+  "salary": 68000
+}
+###
+
+### Create employee 11
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Karen Young",
+  "position": "Designer",
+  "department": "Marketing",
+  "salary": 61000
+}
+###
+
+### Create employee 12
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Leo Adams",
+  "position": "Support",
+  "department": "Customer Service",
+  "salary": 52000
+}
+###
+
+### Create employee 13
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Mia Scott",
+  "position": "QA Engineer",
+  "department": "IT",
+  "salary": 66000
+}
+###
+
+### Create employee 14
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Noah Evans",
+  "position": "Manager",
+  "department": "HR",
+  "salary": 82000
+}
+###
+
+### Create employee 15
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Olivia Turner",
+  "position": "Analyst",
+  "department": "Finance",
+  "salary": 73000
+}
+###
+
+### Create employee 16
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Paul Harris",
+  "position": "Developer",
+  "department": "IT",
+  "salary": 67000
+}
+###
+
+### Create employee 17
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Quinn Baker",
+  "position": "Support",
+  "department": "Customer Service",
+  "salary": 51000
+}
+###
+
+### Create employee 18
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Ruby Carter",
+  "position": "QA Engineer",
+  "department": "IT",
+  "salary": 64000
+}
+###
+
+### Create employee 19
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Sam Foster",
+  "position": "Manager",
+  "department": "Sales",
+  "salary": 87000
+}
+###
+
+### Create employee 20
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Tina Bell",
+  "position": "Designer",
+  "department": "Marketing",
+  "salary": 63000
+}
+###
+
+### Create employee 21
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Uma Reed",
+  "position": "Analyst",
+  "department": "Finance",
+  "salary": 70000
+}
+###
+
+### Create employee 22
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Victor Price",
+  "position": "Developer",
+  "department": "IT",
+  "salary": 66000
+}
+###
+
+### Create employee 23
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Wendy Morris",
+  "position": "Support",
+  "department": "Customer Service",
+  "salary": 53000
+}
+###
+
+### Create employee 24
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Xander Brooks",
+  "position": "QA Engineer",
+  "department": "IT",
+  "salary": 65000
+}
+###
+
+### Create employee 25
+POST {{employeeManagement_HostAddress}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Yara Diaz",
+  "position": "Manager",
+  "department": "HR",
+  "salary": 81000
+}
+###

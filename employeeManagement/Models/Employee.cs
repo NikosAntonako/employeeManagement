@@ -8,12 +8,8 @@ namespace employeeManagement.Models
     /// Represents the database context for the Employee Management application.
     /// This class is used to configure and interact with the database using Entity Framework Core.
     /// </summary>
-    public class EmployeeContext : DbContext
+    public class EmployeeContext(DbContextOptions<EmployeeContext> options) : DbContext(options)
     {
-        public EmployeeContext(DbContextOptions<EmployeeContext> options) : base(options)
-        {
-
-        }
         public DbSet<Employee> Employees { get; set; }
     }
     /// <summary>

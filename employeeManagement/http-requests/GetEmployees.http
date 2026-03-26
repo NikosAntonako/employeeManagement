@@ -1,0 +1,51 @@
+@employeeManagement_HostAddress = https://localhost:7105
+
+### GET first 10 employees (default paging)
+GET {{employeeManagement_HostAddress}}/api/employees
+Accept: application/json
+###
+
+### GET employees page 2, size 5 (paging)
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=2&pageSize=5
+Accept: application/json
+###
+
+### GET employees filtered by department
+GET {{employeeManagement_HostAddress}}/api/employees?department=Sales
+Accept: application/json
+###
+
+### GET employees filtered by position
+GET {{employeeManagement_HostAddress}}/api/employees?position=Manager
+Accept: application/json
+###
+
+### GET employees filtered by department and position
+GET {{employeeManagement_HostAddress}}/api/employees?department=Sales&position=Manager
+Accept: application/json
+###
+
+### GET employees sorted by salary ascending
+GET {{employeeManagement_HostAddress}}/api/employees?sortBySalary=asc
+Accept: application/json
+###
+
+### GET employees sorted by name descending
+GET {{employeeManagement_HostAddress}}/api/employees?sortByName=desc
+Accept: application/json
+###
+
+### GET employees sorted by salary descending, then name ascending
+GET {{employeeManagement_HostAddress}}/api/employees?sortBySalary=desc&sortByName=asc
+Accept: application/json
+###
+
+### GET employees with invalid sortBySalary
+GET {{employeeManagement_HostAddress}}/api/employees?sortBySalary=invalid
+Accept: application/json
+###
+
+### GET employees with invalid pageNumber and pageSize
+GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=0&pageSize=0
+Accept: application/json
+###

@@ -10,24 +10,88 @@ namespace employeeManagement.Controllers
     /// </summary>
     [ApiController]
     [Route("[controller]")]
-    public class EmployeeController : ControllerBase
+    public class EmployeeController(EmployeeContext context) : ControllerBase
     {
-        private readonly EmployeeContext _context;
-
-        public EmployeeController(EmployeeContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
-        /// Retrieves all employees from the database.
+        /// Retrieves all employees from the database with optional filtering, paging, and sorting.
         /// </summary>
-        /// <returns>An enumerable collection of all employees.
-        /// The collection will be empty if no employees are available.</returns>
+        /// <param name="pageNumber">The page number for pagination (default is 1).</param>
+        /// <param name="pageSize">The number of employees per page (default is 10).</param>
+        /// <param name="sortBySalary">Sorts employees by salary ("asc" or "desc").</param>
+        /// <param name="sortByName">Sorts employees by name ("asc" or "desc").</param>
+        /// <param name="department">Optional filter by department.</param>
+        /// <param name="position">Optional filter by position.</param>
+        /// <returns>A paged, optionally filtered and sorted collection of employees.</returns>
         [HttpGet("/api/employees")]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetAll()
+        public async Task<ActionResult<IEnumerable<Employee>>> GetAll(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sortBySalary = null,
+            [FromQuery] string? sortByName = null,
+            [FromQuery] string? department = null,
+            [FromQuery] string? position = null)
         {
-            return await _context.Employees.ToListAsync();
+            // Fix for possible pageNumber and pageSize negative values
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest(new { message = "pageNumber and pageSize must be greater than 0." });
+            }
+
+            IQueryable<Employee> query = context.Employees;
+
+            if (!string.IsNullOrEmpty(department))
+            {
+                query = query.Where(e => e.Department == department);
+            }
+
+            if (!string.IsNullOrEmpty(position))
+            {
+                query = query.Where(e => e.Position == position);
+            }
+
+            bool sorted = false;
+
+            if (!string.IsNullOrEmpty(sortBySalary))
+            {
+                if (!sortBySalary.Equals("asc", StringComparison.OrdinalIgnoreCase) &&
+                    !sortBySalary.Equals("desc", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "sortBySalary must 'asc' or 'desc'." });
+                }
+                query = sortBySalary.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                    ? query.OrderByDescending(e => e.Salary)
+                    : query.OrderBy(e => e.Salary);
+                sorted = true;
+            }
+
+            if (!string.IsNullOrEmpty(sortByName))
+            {
+                if (!sortByName.Equals("asc", StringComparison.CurrentCultureIgnoreCase) &&
+                    !sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return BadRequest(new { message = "sortByName must have 'asc' or 'desc'." });
+                }
+                if (sorted)
+                {
+                    query = sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase)
+                        ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
+                        : ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name);
+                }
+                else
+                {
+                    query = sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase)
+                        ? query.OrderByDescending(e => e.Name)
+                        : query.OrderBy(e => e.Name);
+                }
+            }
+
+            var employees = await query
+                // For page 1, you want to skip 0 items: (1 - 1) * pageSize = 0 etc
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return employees;
         }
 
         /// <summary>
@@ -39,7 +103,7 @@ namespace employeeManagement.Controllers
         [HttpGet("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> GetById(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found.", id });
 
@@ -54,8 +118,8 @@ namespace employeeManagement.Controllers
         [HttpPost("/api/employees")]
         public async Task<ActionResult<Employee>> Create(Employee employee)
         {
-            _context.Employees.Add(employee);
-            await _context.SaveChangesAsync();
+            context.Employees.Add(employee);
+            await context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
         }
@@ -70,7 +134,7 @@ namespace employeeManagement.Controllers
         [HttpPut("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound();
 
@@ -79,7 +143,7 @@ namespace employeeManagement.Controllers
             employee.Department = updatedEmployee.Department;
             employee.Salary = updatedEmployee.Salary;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return Ok(employee);
         }
@@ -93,12 +157,12 @@ namespace employeeManagement.Controllers
         [HttpDelete("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> Delete(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found", id });
 
-            _context.Employees.Remove(employee);
-            await _context.SaveChangesAsync();
+            context.Employees.Remove(employee);
+            await context.SaveChangesAsync();
 
             return NoContent();
         }

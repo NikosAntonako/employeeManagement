@@ -1,0 +1,11 @@
+@employeeManagement_HostAddress = https://localhost:7105
+
+### DELETE employee (success)
+DELETE {{employeeManagement_HostAddress}}/api/employees/1
+Accept: application/json
+###
+
+### DELETE employee (not found)
+DELETE {{employeeManagement_HostAddress}}/api/employees/0
+Accept: application/json
+###
