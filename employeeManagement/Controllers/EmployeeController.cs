@@ -14,10 +14,6 @@ namespace employeeManagement.Controllers
     {
         private readonly EmployeeContext _context;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EmployeeController"/> class.
-        /// </summary>
-        /// <param name="context">The database context for accessing employee data.</param>
         public EmployeeController(EmployeeContext context)
         {
             _context = context;
