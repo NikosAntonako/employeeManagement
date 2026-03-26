@@ -2,9 +2,13 @@
 
 namespace employeeManagement.Models
 {
+    /// <summary>
+    /// Represents an Employee entity in the Employee Management application.
+    /// This class is used to define the structure of the Employee data stored in memory during runtime.
+    /// </summary>
     public class Employee
     {
-        // Id is being set server side from Controller automatically
+        // ID is being set server side from Controller automatically
         // Cannot be set by POST, safe to not be required
         public int Id { get; set; }
         public required string Name { get; set; }
