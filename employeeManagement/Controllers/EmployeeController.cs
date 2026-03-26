@@ -9,7 +9,7 @@ namespace employeeManagement.Controllers
     /// Provides endpoints for CRUD operations on employees using a database.
     /// </summary>
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/employees")]
     public class EmployeeController(EmployeeContext context) : ControllerBase
     {
         /// <summary>
@@ -22,7 +22,7 @@ namespace employeeManagement.Controllers
         /// <param name="department">Optional filter by department.</param>
         /// <param name="position">Optional filter by position.</param>
         /// <returns>A paged, optionally filtered and sorted collection of employees.</returns>
-        [HttpGet("/api/employees")]
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Employee>>> GetAll(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -100,7 +100,7 @@ namespace employeeManagement.Controllers
         /// <param name="id">The ID of the employee.</param>
         /// <returns>The employee with the specified ID, 
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpGet("/api/employees/{id}")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetById(int id)
         {
             var employee = await context.Employees.FindAsync(id);
@@ -115,13 +115,13 @@ namespace employeeManagement.Controllers
         /// </summary>
         /// <param name="employee">The employee object to create.</param>
         /// <returns>The created employee and a location header with the URI of the new resource.</returns>
-        [HttpPost("/api/employees")]
+        [HttpPost]
         public async Task<ActionResult<Employee>> Create(Employee employee)
         {
             context.Employees.Add(employee);
             await context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
+            return StatusCode(StatusCodes.Status201Created, employee);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace employeeManagement.Controllers
         /// <param name="updatedEmployee">The updated employee object.</param>
         /// <returns>The updated employee object,
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpPut("/api/employees/{id}")]
+        [HttpPut("{id}")]
         public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
             var employee = await context.Employees.FindAsync(id);
@@ -154,7 +154,7 @@ namespace employeeManagement.Controllers
         /// <param name="id">The ID of the employee to delete.</param>
         /// <returns>A 204 No Content response if the deletion is successful, 
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpDelete("/api/employees/{id}")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult<Employee>> Delete(int id)
         {
             var employee = await context.Employees.FindAsync(id);
