@@ -4,6 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace employeeManagement.Models
 {
+    /// <summary>
+    /// Represents the database context for the Employee Management application.
+    /// This class is used to configure and interact with the database using Entity Framework Core.
+    /// </summary>
     public class EmployeeContext : DbContext
     {
         public EmployeeContext(DbContextOptions<EmployeeContext> options) : base(options)
@@ -12,7 +16,10 @@ namespace employeeManagement.Models
         }
         public DbSet<Employee> Employees { get; set; }
     }
-
+    /// <summary>
+    /// Represents an Employee entity in the Employee Management application.
+    /// This class maps to the Employees table in the database.
+    /// </summary>
     public class Employee
     {
         // Id is being set server side from Controller automatically
