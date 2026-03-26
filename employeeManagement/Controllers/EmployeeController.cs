@@ -6,7 +6,7 @@ namespace employeeManagement.Controllers
 {
     /// <summary>
     /// Represents the controller for managing Employee resources in the Employee Management application.
-    /// Provides endpoints for CRUD operations on employees.
+    /// Provides endpoints for CRUD operations on employees using a database.
     /// </summary>
     [ApiController]
     [Route("[controller]")]
@@ -24,30 +24,22 @@ namespace employeeManagement.Controllers
         }
 
         /// <summary>
-        /// Retrieves a paginated list of all employees.
+        /// Retrieves all employees from the database.
         /// </summary>
-        /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
-        /// <param name="pageSize">The number of employees per page (default is 10).</param>
-        /// <returns>An enumerable collection of employees. Returns an empty collection if no employees are available.</returns>
+        /// <returns>An enumerable collection of all employees.
+        /// The collection will be empty if no employees are available.</returns>
         [HttpGet("/api/employees")]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<Employee>>> GetAll()
         {
-            if (pageNumber < 1 || pageSize < 1)
-                return BadRequest(new { message = "pageNumber and pageSize must be greater than 0" });
-
-            var pagedEmployees = await _context.Employees
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return Ok(pagedEmployees);
+            return await _context.Employees.ToListAsync();
         }
 
         /// <summary>
-        /// Retrieves an employee by their unique identifier.
+        /// Retrieves an employee by their ID.
         /// </summary>
-        /// <param name="id">The unique identifier of the employee.</param>
-        /// <returns>The employee with the specified ID, or a 404 Not Found response if the employee does not exist.</returns>
+        /// <param name="id">The ID of the employee.</param>
+        /// <returns>The employee with the specified ID, 
+        /// or a 404 Not Found response if the employee does not exist.</returns>
         [HttpGet("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> GetById(int id)
         {
@@ -75,9 +67,10 @@ namespace employeeManagement.Controllers
         /// <summary>
         /// Updates the details of an existing employee.
         /// </summary>
-        /// <param name="id">The unique identifier of the employee to update.</param>
+        /// <param name="id">The ID of the employee to update.</param>
         /// <param name="updatedEmployee">The updated employee object.</param>
-        /// <returns>The updated employee object, or a 404 Not Found response if the employee does not exist.</returns>
+        /// <returns>The updated employee object,
+        /// or a 404 Not Found response if the employee does not exist.</returns>
         [HttpPut("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
@@ -96,10 +89,11 @@ namespace employeeManagement.Controllers
         }
 
         /// <summary>
-        /// Deletes an employee by their unique identifier.
+        /// Deletes an employee by their ID.
         /// </summary>
-        /// <param name="id">The unique identifier of the employee to delete.</param>
-        /// <returns>A 204 No Content response if the deletion is successful, or a 404 Not Found response if the employee does not exist.</returns>
+        /// <param name="id">The ID of the employee to delete.</param>
+        /// <returns>A 204 No Content response if the deletion is successful, 
+        /// or a 404 Not Found response if the employee does not exist.</returns>
         [HttpDelete("/api/employees/{id}")]
         public async Task<ActionResult<Employee>> Delete(int id)
         {
