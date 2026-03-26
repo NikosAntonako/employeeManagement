@@ -11,10 +11,6 @@ namespace employeeManagement.Controllers
     [Route("[controller]")]
     public class EmployeeController : ControllerBase
     {
-        /// <summary>
-        /// Static in-memory collection of employees.
-        /// This collection is used to store employee data during the application's runtime.
-        /// </summary>
         private static readonly List<Employee> Employees = new();
 
         /// <summary>
