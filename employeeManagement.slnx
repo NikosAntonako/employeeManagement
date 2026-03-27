@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="BlazorApp/BlazorApp.csproj" Id="758bb12e-7748-4fa4-a147-f365c57ba574" />
-  <Project Path="employeeManagement/employeeManagement.csproj" />
+  <Project Path="BlazorApp/Frontend.csproj" Id="758bb12e-7748-4fa4-a147-f365c57ba574" />
+  <Project Path="employeeManagement/Backend.csproj" />
 </Solution>
