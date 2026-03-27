@@ -1,0 +1,91 @@
+﻿@page "/employees"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>EmployeeList</h3>
+
+<button class="btn btn-primary mb-3" @onclick="AddEmployee">Add New Employee</button>
+
+@if (employees == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!employees.Any())
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Department</th>
+                <th>Salary</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var emp in employees)
+            {
+               <tr>
+                   <td>@emp.Id</td>
+                   <td>@emp.Name</td>
+                   <td>@emp.Position</td>
+                   <td>@emp.Department</td>
+                   <td>@emp.Salary.ToString("C")</td>
+                   <td>
+                       <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => 
+                           EditEmployee(emp.Id)">Edit</button>
+                       <button class="btn btn-sm btn-outline-danger" @onclick="() => 
+                           DeleteEmployee(emp.Id)">Delete</button>
+                   </td>
+               </tr> 
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee>? employees;
+
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await Http.GetFromJsonAsync<List<Employee>>("employees");
+    }
+
+    void AddEmployee()
+    {
+        Navigation.NavigateTo("/employees/add");
+    }
+
+    void EditEmployee(int id)
+    {
+        Navigation.NavigateTo($"/employees/edit/{id}");
+    }
+
+    async Task DeleteEmployee(int id)
+    {
+        var response = await Http.DeleteAsync($"employees/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            employees = employees?.Where(e => e.Id != id).ToList();
+            StateHasChanged();
+        }
+        else
+        {
+            // TODO error handler
+        }
+    }
+
+    public class Employee
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
+    }
+}
