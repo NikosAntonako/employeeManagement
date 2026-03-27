@@ -51,38 +51,47 @@ namespace employeeManagement.Controllers
 
             bool sorted = false;
 
+            // Salary sorting
             if (!string.IsNullOrEmpty(sortBySalary))
             {
-                if (!sortBySalary.Equals("asc", StringComparison.OrdinalIgnoreCase) &&
-                    !sortBySalary.Equals("desc", StringComparison.OrdinalIgnoreCase))
+                switch (sortBySalary.ToLowerInvariant())
                 {
-                    return BadRequest(new { message = "sortBySalary must 'asc' or 'desc'." });
+                    case "asc":
+                        query = query.OrderBy(e => e.Salary);
+                        sorted = true;
+                        break;
+                    case "desc":
+                        query = query.OrderByDescending(e => e.Salary);
+                        sorted = true;
+                        break;
+                    default:
+                        return BadRequest(new { message = "sortBySalary must be 'asc' or 'desc'." });
                 }
-                query = sortBySalary.Equals("desc", StringComparison.OrdinalIgnoreCase)
-                    ? query.OrderByDescending(e => e.Salary)
-                    : query.OrderBy(e => e.Salary);
-                sorted = true;
             }
 
+            // Name sorting
             if (!string.IsNullOrEmpty(sortByName))
             {
-                if (!sortByName.Equals("asc", StringComparison.CurrentCultureIgnoreCase) &&
-                    !sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase))
+                switch (sortByName.ToLowerInvariant())
                 {
-                    return BadRequest(new { message = "sortByName must have 'asc' or 'desc'." });
+                    case "asc":
+                        query = sorted
+                            ? ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name)
+                            : query.OrderBy(e => e.Name);
+                        break;
+                    case "desc":
+                        query = sorted
+                            ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
+                            : query.OrderByDescending(e => e.Name);
+                        break;
+                    default:
+                        return BadRequest(new { message = "sortByName must be 'asc' or 'desc'." });
                 }
-                if (sorted)
-                {
-                    query = sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase)
-                        ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
-                        : ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name);
-                }
-                else
-                {
-                    query = sortByName.Equals("desc", StringComparison.CurrentCultureIgnoreCase)
-                        ? query.OrderByDescending(e => e.Name)
-                        : query.OrderBy(e => e.Name);
-                }
+            }
+
+            if (!sorted && string.IsNullOrEmpty(sortByName))
+            {
+                query = query.OrderBy(e => e.Id);
             }
 
             var employees = await query
@@ -118,6 +127,12 @@ namespace employeeManagement.Controllers
         [HttpPost]
         public async Task<ActionResult<Employee>> Create(Employee employee)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            employee.Id = 0;
             context.Employees.Add(employee);
             await context.SaveChangesAsync();
 
@@ -134,6 +149,11 @@ namespace employeeManagement.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound();
