@@ -1,8 +1,8 @@
-using employeeManagement.Models;
+using Backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace employeeManagement.Controllers
+namespace Backend.Controllers
 {
     /// <summary>
     /// Represents the controller for managing Employee resources in the Employee Management application.

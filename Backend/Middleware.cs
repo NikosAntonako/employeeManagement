@@ -1,4 +1,4 @@
-﻿namespace employeeManagement
+﻿namespace Backend
 {
     public static class Middleware
     {

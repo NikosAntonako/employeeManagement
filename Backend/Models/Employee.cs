@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace employeeManagement.Models
+namespace Backend.Models
 {
     /// <summary>
     /// Represents the database context for the Employee Management application.

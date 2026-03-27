@@ -1,4 +1,5 @@
-using employeeManagement.Models;
+using Backend;
+using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,8 +30,8 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
-app.Use(employeeManagement.Middleware.ExceptionHandlingMiddleware);
-app.Use(employeeManagement.Middleware.LoggingMiddleware);
+app.Use(Middleware.ExceptionHandlingMiddleware);
+app.Use(Middleware.LoggingMiddleware);
 
 app.MapControllers();
 app.Run();
