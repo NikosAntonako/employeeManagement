@@ -62,43 +62,25 @@ else
 
     private List<Employee>? employees;
 
-    private async Task ShowSuccessMessage(string message)
+    private async Task ShowMessage(string? success = null, string? error = null)
     {
         messageCts?.Cancel();
         messageCts = new CancellationTokenSource();
-        successMessage = message;
-        errorMessage = null;
+        successMessage = success;
+        errorMessage = error;
         StateHasChanged();
 
         try
         {
             await Task.Delay(5000, messageCts.Token);
             successMessage = null;
-            StateHasChanged();
-        }
-        catch (TaskCanceledException)
-        {
-            // TODO
-        }
-    }
-
-    private async Task ShowErrorMessage(string message)
-    {
-        messageCts?.Cancel();
-        messageCts = new CancellationTokenSource();
-        errorMessage = message;
-        successMessage = null;
-        StateHasChanged();
-
-        try
-        {
-            await Task.Delay(5000, messageCts.Token);
             errorMessage = null;
             StateHasChanged();
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException ex)
         {
-            // TODO
+            // Just for diagnostics
+            Console.WriteLine("Message timer canceled: " + ex.Message);
         }
     }
 
@@ -157,16 +139,16 @@ else
             {
                 // Re-fetching the list from the backend
                 employees = await Http.GetFromJsonAsync<List<Employee>>("employees");
-                await ShowSuccessMessage($"Employee '{employeeName}' with id {id} was deleted successfully.");
+                await ShowMessage(success: $"Employee '{employeeName}' with id {id} was deleted successfully.");
             }
             else
             {
-                await ShowErrorMessage($"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
+                await ShowMessage(error: $"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
             }
         }
         catch (Exception ex)
         {
-            await ShowErrorMessage($"Error deleting '{employeeName}' with id {id}: {ex.Message}");
+            await ShowMessage(error: $"Error deleting '{employeeName}' with id {id}: {ex.Message}");
         }
     }
 
