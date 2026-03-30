@@ -1,0 +1,123 @@
+﻿@page "/edit/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>Edit Employee</h3>
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (employee == null)
+{
+    <p><em>Loading ...</em></p>
+}
+else
+{
+    <EditForm Model="employee" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="employee.Name" />
+            <ValidationMessage For="@(() => employee.Name)" />
+        </div>
+        <div class="mb-3">
+            <label>Position</label>
+            <InputText class="form-control" @bind-Value="employee.Position" />
+            <ValidationMessage For="@(() => employee.Position)" />
+        </div>
+        <div class="mb-3">
+            <label>Department</label>
+            <InputText class="form-control" @bind-Value="employee.Department" />
+            <ValidationMessage For="@(() => employee.Department)" />
+        </div>
+        <div class="mb-3">
+            <label>Salary</label>
+            <InputNumber class="form-control" @bind-Value="employee.Salary" />
+            <ValidationMessage For="@(() => employee.Salary)" />
+        </div>
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+        <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private string? successMessage;
+    private string? errorMessage;
+
+    private EmployeeInput? employee;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            employee = await Http.GetFromJsonAsync<EmployeeInput>($"employees/{Id}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load employee: " + ex.Message;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        successMessage = errorMessage = null; // Clear previous error
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"employees/{Id}", employee);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = $"Employee  with id {Id} was updated successfully.";
+            }
+            else
+            {
+                errorMessage = $"Failed to update employee with id {Id}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating: {ex.Message}";
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class EmployeeInput
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [MinLength(1, ErrorMessage = "Name cannot be empty.")]
+        [StringLength(30, ErrorMessage = "Name cannot exceed 30 characters.")]
+        [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Name must contain only letters and spaces.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Position is required.")]
+        [MinLength(1, ErrorMessage = "Position cannot be empty.")]
+        [StringLength(30, ErrorMessage = "Position cannot exceed 30 characters.")]
+        [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Position must contain only letters and spaces.")]
+        public string Position { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Department is required.")]
+        [MinLength(1, ErrorMessage = "Department  cannot be empty.")]
+        [StringLength(30, ErrorMessage = "Department cannot exceed 30 characters.")]
+        [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Department must contain only letters and spaces.")]
+        public string Department { get; set; } = string.Empty;
+
+        [Range(0.01, 999999999999999999.99, ErrorMessage = "Salary must be between 0.01 and 999999999999999999.99.")]
+        public decimal Salary { get; set; }
+    }
+}

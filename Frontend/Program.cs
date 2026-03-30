@@ -8,6 +8,12 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Configure HttpClient with the Backend
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
+if (string.IsNullOrEmpty(apiBaseUrl))
+    throw new InvalidOperationException("ApiBaseUrl is not configured.");
+
+if (!Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out var baseUri))
+    throw new UriFormatException($"ApiBaseUrl '{apiBaseUrl}' is not a valid absolute URI.");
+
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = baseUri });
 
 await builder.Build().RunAsync();
