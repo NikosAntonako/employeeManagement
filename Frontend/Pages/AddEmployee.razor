@@ -1,5 +1,5 @@
 ﻿@page "/add"
-@inject HttpClient Http
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Navigation
 
 <h3>Add Employee</h3>
@@ -54,6 +54,9 @@ else
 }
 
 @code {
+    private HttpClient _httpClient = default!;
+
+   
     // 1. Fields and properties
     private EmployeeInput employee = new();
 
@@ -75,12 +78,12 @@ else
 
         try
         {
-            var response = await Http.PostAsJsonAsync("employees", employee);
+            var response = await _httpClient.PostAsJsonAsync("employees", employee);
 
             if (response.IsSuccessStatusCode)
             {
                 var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeResponse>();
-                await ShowMessage($"New Employee '{createdEmployee?.Name ?? employee.Name}' and id: {createdEmployee?.Id}  was added successfully.");
+                await ShowMessage($"New Employee '{createdEmployee?.Name ?? employee.Name}' with id: {createdEmployee?.Id} was added successfully.");
             }
             else
             {
@@ -103,8 +106,14 @@ else
     {
         Navigation.NavigateTo("/");
     }
+    
+    // 3. Life cycle methods
+    protected override void OnInitialized()
+    {
+        _httpClient = HttpClientFactory.CreateClient("BackendApi");
+    }
 
-    // 3. Private helper methods
+    // 4. Private helper methods
     private async Task ShowMessage(string? success = null, string? error = null)
     {
         messageCts?.Cancel();
@@ -127,7 +136,7 @@ else
         }
     }
 
-    // 4. Nested classes
+    // 5. Nested classes
     private class EmployeeResponse
     {
         public int Id { get; set; }

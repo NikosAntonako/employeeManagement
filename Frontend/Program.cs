@@ -14,6 +14,9 @@ if (string.IsNullOrEmpty(apiBaseUrl))
 if (!Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out var baseUri))
     throw new UriFormatException($"ApiBaseUrl '{apiBaseUrl}' is not a valid absolute URI.");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = baseUri });
+builder.Services.AddHttpClient("BackendApi", client =>
+{
+    client.BaseAddress = baseUri;
+});
 
 await builder.Build().RunAsync();

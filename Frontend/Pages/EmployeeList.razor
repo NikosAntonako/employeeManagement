@@ -1,5 +1,5 @@
 ﻿@page "/"
-@inject HttpClient Http
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Navigation
 
 <h3>Employee List</h3>
@@ -76,9 +76,11 @@ else
 }
 
 @code {
+    private HttpClient _httpClient = default!;
+
     // 1. Fields and properties
     private List<Employee>? employees;
-
+    
     // Search Field
     private string searchTerm = string.Empty;
 
@@ -108,7 +110,9 @@ else
     // 3. Lifecycle methods
     protected override async Task OnInitializedAsync()
     {
+        _httpClient = HttpClientFactory.CreateClient("BackendApi");
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("success", out var message))
             successMessage = message;
 
@@ -158,7 +162,7 @@ else
 
         try
         {
-            var response = await Http.DeleteAsync($"employees/{id}");
+            var response = await _httpClient.DeleteAsync($"employees/{id}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -199,9 +203,10 @@ else
     {
         // turn loading on
         isLoading = true;
+
         try
         {
-            var response = await Http.GetFromJsonAsync<PagedResult<Employee>>($"employees?pageNumber={currentPage}&pageSize={pageSize}");
+            var response = await _httpClient.GetFromJsonAsync<PagedResult<Employee>>($"employees?pageNumber={currentPage}&pageSize={pageSize}");
             employees = response?.Items;
             totalPages = response?.TotalPages ?? 1;
         }
