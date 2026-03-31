@@ -4,6 +4,7 @@
 
 <h3>Add Employee</h3>
 
+<!-- Notification Area -->
 @if (!string.IsNullOrEmpty(successMessage))
 {
     <div class="alert alert-success">@successMessage</div>
@@ -13,41 +14,97 @@ else if (!string.IsNullOrEmpty(errorMessage))
     <div class="alert alert-danger">@errorMessage</div>
 }
 
-<EditForm Model="employee" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<!-- Loading Indicator -->
+@if (isLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <!-- Employee Form -->
+    <EditForm Model="employee" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="mb-3">
-        <label>Name</label>
-        <InputText class="form-control" @bind-Value="employee.Name" />
-        <ValidationMessage For="@(() => employee.Name)" />
-    </div>
-    <div class="mb-3">
-        <label>Position</label>
-        <InputText class="form-control" @bind-Value="employee.Position" />
-        <ValidationMessage For="@(() => employee.Position)" />
-    </div>
-    <div class="mb-3">
-        <label>Department</label>
-        <InputText class="form-control" @bind-Value="employee.Department" />
-        <ValidationMessage For="@(() => employee.Department)" />
-    </div>
-    <div class="mb-3">
-        <label>Salary</label>
-        <InputNumber class="form-control" @bind-Value="employee.Salary" />
-        <ValidationMessage For="@(() => employee.Salary)" />
-    </div>
-    <button class="btn btn-primary" type="submit">Add Employee</button>
-    <button class="btn btn-secondary ms-2" type="button" @onclick="GoBack">Cancel</button>
-</EditForm>
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="employee.Name" />
+            <ValidationMessage For="@(() => employee.Name)" />
+        </div>
+        <div class="mb-3">
+            <label>Position</label>
+            <InputText class="form-control" @bind-Value="employee.Position" />
+            <ValidationMessage For="@(() => employee.Position)" />
+        </div>
+        <div class="mb-3">
+            <label>Department</label>
+            <InputText class="form-control" @bind-Value="employee.Department" />
+            <ValidationMessage For="@(() => employee.Department)" />
+        </div>
+        <div class="mb-3">
+            <label>Salary</label>
+            <InputNumber class="form-control" @bind-Value="employee.Salary" />
+            <ValidationMessage For="@(() => employee.Salary)" />
+        </div>
+        <button class="btn btn-primary" type="submit">Add Employee</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
 
 @code {
+    // 1. Fields and properties
     private EmployeeInput employee = new();
 
+    // Notification Fields
     private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
+    // Loading indicator true = on, false = off
+    private bool isLoading = false;
+
+    // 2. Event handlers and public methods
+    private async Task HandleValidSubmit()
+    {
+        // Turn Loading on
+        isLoading = true;
+        // Clear previous error
+        successMessage = errorMessage = null;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("employees", employee);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeResponse>();
+                await ShowMessage($"New Employee '{createdEmployee?.Name ?? employee.Name}' and id: {createdEmployee?.Id}  was added successfully.");
+            }
+            else
+            {
+                await ShowMessage($"Failed to add employee '{employee.Name}'. Please check your input and try again.");
+            }
+        }
+        catch (Exception exception)
+        {
+            errorMessage = $"Error adding '{employee.Name}': {exception.Message}";
+            Console.Error.WriteLine($"Error adding '{employee.Name}': {exception.Message}");
+        }
+        finally
+        {
+            // Turn Loading off
+            isLoading = false;
+        }
+    }
+
+    void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    // 3. Private helper methods
     private async Task ShowMessage(string? success = null, string? error = null)
     {
         messageCts?.Cancel();
@@ -70,40 +127,11 @@ else if (!string.IsNullOrEmpty(errorMessage))
         }
     }
 
+    // 4. Nested classes
     private class EmployeeResponse
     {
         public int Id { get; set; }
         public string? Name { get; set; }
-    }
-
-    private async Task HandleValidSubmit()
-    {
-        successMessage = errorMessage = null; // Clear previous error
-
-        try
-        {
-            var response = await Http.PostAsJsonAsync("employees", employee);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeResponse>();
-                await ShowMessage($"New Employee '{createdEmployee?.Name ?? employee.Name}' and id: {createdEmployee?.Id}  was added successfully.");
-            }
-            else
-            {
-                await ShowMessage($"Failed to add employee '{employee.Name}'. Please check your input and try again.");
-            }
-        }
-        catch (Exception exception)
-        {
-            errorMessage = $"Error adding '{employee.Name}': {exception.Message}";
-            Console.Error.WriteLine($"Error adding '{employee.Name}': {exception.Message}");
-        }
-    }
-
-    private void GoBack()
-    {
-        Navigation.NavigateTo("/");
     }
 
     public class EmployeeInput

@@ -108,8 +108,6 @@ namespace Backend.Controllers
             return Ok(new
             {
                 Items = employees,
-                PageSize = pageSize,
-                CurrentPage = pageNumber,
                 TotalPages = totalPages
             });
         }

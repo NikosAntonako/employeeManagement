@@ -4,6 +4,7 @@
 
 <h3>Edit Employee</h3>
 
+<!-- Notification Area -->
 @if (!string.IsNullOrEmpty(successMessage))
 {
     <div class="alert alert-success">@successMessage</div>
@@ -13,12 +14,16 @@ else if (!string.IsNullOrEmpty(errorMessage))
     <div class="alert alert-danger">@errorMessage</div>
 }
 
-@if (employee == null)
+<!-- Loading Indicator -->
+@if (isLoading)
 {
-    <p><em>Loading ...</em></p>
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
 }
-else
+else if (employee != null)
 {
+    <!-- Employee Form -->
     <EditForm Model="employee" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -47,17 +52,79 @@ else
         <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
     </EditForm>
 }
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
 @code {
+    // 1. Parameters
     [Parameter]
     public int Id { get; set; }
 
+    // 2. Fields and properties
     private EmployeeInput? employee;
 
+    // Notification Fields
     private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
+    // Loading indicator true = on, false = off
+    private bool isLoading = false;
+
+    // 3. Lifecycle methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            employee = await Http.GetFromJsonAsync<EmployeeInput>($"employees/{Id}");
+        }
+        catch (Exception exception)
+        {
+            errorMessage = "Failed to load employee: " + exception.Message;
+        }
+    }
+
+    // 4. Event handlers and public methods
+    private async Task HandleValidSubmit()
+    {
+        // Turn Loading on
+        isLoading = true;
+        // Clear previous error
+        successMessage = errorMessage = null;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"employees/{Id}", employee);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await ShowMessage(success: $"Employee  with id {Id} was updated successfully.");
+            }
+            else
+            {
+                await ShowMessage(error: $"Failed to update employee with id {Id}.");
+            }
+        }
+        catch (Exception exception)
+        {
+            errorMessage = $"Error updating: {exception.Message}";
+            Console.Error.WriteLine($"Error updating: {exception.Message}");
+        }
+        finally
+        {
+            // Turn Loading off
+            isLoading = false;
+        }
+    }
+
+    void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    // 5. Private helper methods
     private async Task ShowMessage(string? success = null, string? error = null)
     {
         messageCts?.Cancel();
@@ -78,47 +145,6 @@ else
             // Just for diagnostics
             Console.WriteLine("Message timer canceled: " + exception.Message);
         }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            employee = await Http.GetFromJsonAsync<EmployeeInput>($"employees/{Id}");
-        }
-        catch (Exception exception)
-        {
-            errorMessage = "Failed to load employee: " + exception.Message;
-        }
-    }
-
-    private async Task HandleValidSubmit()
-    {
-        successMessage = errorMessage = null; // Clear previous error
-
-        try
-        {
-            var response = await Http.PutAsJsonAsync($"employees/{Id}", employee);
-
-            if (response.IsSuccessStatusCode)
-            {
-                await ShowMessage(success: $"Employee  with id {Id} was updated successfully.");
-            }
-            else
-            {
-                await ShowMessage(error: $"Failed to update employee with id {Id}.");
-            }
-        }
-        catch (Exception exception)
-        {
-            errorMessage = $"Error updating: {exception.Message}";
-            Console.Error.WriteLine($"Error updating: {exception.Message}");
-        }
-    }
-
-    private void GoBack()
-    {
-        Navigation.NavigateTo("/");
     }
 
     public class EmployeeInput
