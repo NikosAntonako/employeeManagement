@@ -52,10 +52,33 @@ else
     [Parameter]
     public int Id { get; set; }
 
+    private EmployeeInput? employee;
+
+    private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
-    private EmployeeInput? employee;
+    private async Task ShowMessage(string? success = null, string? error = null)
+    {
+        messageCts?.Cancel();
+        messageCts = new CancellationTokenSource();
+        successMessage = success;
+        errorMessage = error;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(5000, messageCts.Token);
+            successMessage = null;
+            errorMessage = null;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException exception)
+        {
+            // Just for diagnostics
+            Console.WriteLine("Message timer canceled: " + exception.Message);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,9 +86,9 @@ else
         {
             employee = await Http.GetFromJsonAsync<EmployeeInput>($"employees/{Id}");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            errorMessage = "Failed to load employee: " + ex.Message;
+            errorMessage = "Failed to load employee: " + exception.Message;
         }
     }
 
@@ -79,16 +102,17 @@ else
 
             if (response.IsSuccessStatusCode)
             {
-                successMessage = $"Employee  with id {Id} was updated successfully.";
+                await ShowMessage(success: $"Employee  with id {Id} was updated successfully.");
             }
             else
             {
-                errorMessage = $"Failed to update employee with id {Id}.";
+                await ShowMessage(error: $"Failed to update employee with id {Id}.");
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            errorMessage = $"Error updating: {ex.Message}";
+            errorMessage = $"Error updating: {exception.Message}";
+            Console.Error.WriteLine($"Error updating: {exception.Message}");
         }
     }
 

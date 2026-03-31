@@ -42,10 +42,33 @@ else if (!string.IsNullOrEmpty(errorMessage))
 </EditForm>
 
 @code {
+    private EmployeeInput employee = new();
+
+    private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
-    private EmployeeInput employee = new();
+    private async Task ShowMessage(string? success = null, string? error = null)
+    {
+        messageCts?.Cancel();
+        messageCts = new CancellationTokenSource();
+        successMessage = success;
+        errorMessage = error;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(5000, messageCts.Token);
+            successMessage = null;
+            errorMessage = null;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException exception)
+        {
+            // Just for diagnostics
+            Console.WriteLine("Message timer canceled: " + exception.Message);
+        }
+    }
 
     private class EmployeeResponse
     {
@@ -64,16 +87,17 @@ else if (!string.IsNullOrEmpty(errorMessage))
             if (response.IsSuccessStatusCode)
             {
                 var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeResponse>();
-                successMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' and id: {createdEmployee?.Id}  was added successfully.";
+                await ShowMessage($"New Employee '{createdEmployee?.Name ?? employee.Name}' and id: {createdEmployee?.Id}  was added successfully.");
             }
             else
             {
-                errorMessage = $"Failed to add employee '{employee.Name}'. Please check your input and try again.";
+                await ShowMessage($"Failed to add employee '{employee.Name}'. Please check your input and try again.");
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            errorMessage = $"Error adding '{employee.Name}': {ex.Message}";
+            errorMessage = $"Error adding '{employee.Name}': {exception.Message}";
+            Console.Error.WriteLine($"Error adding '{employee.Name}': {exception.Message}");
         }
     }
 

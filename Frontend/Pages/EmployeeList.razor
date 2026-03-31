@@ -4,6 +4,7 @@
 
 <h3>Employee List</h3>
 
+<!-- Notification Area -->
 @if (!string.IsNullOrEmpty(successMessage))
 {
     <div class="alert alert-success">@successMessage</div>
@@ -13,18 +14,26 @@
     <div class="alert alert-danger">@errorMessage</div>
 }
 
+<!-- Filter Form -->
+<div class="mb-3">
+    <input class="form-control" placeholder="Search by Name, Position or Department"
+           @bind="searchTerm" @bind:event="on input" />
+</div>
+
 <button class="btn btn-primary mb-3" @onclick="AddEmployee">Add New Employee</button>
 
+<!-- Loading Screen -->
 @if (employees == null)
 {
     <p><em>Loading...</em></p>
 }
-else if (!employees.Any())
+else if (!FilteredEmployees.Any())
 {
     <p>No employees found.</p>
 }
 else
 {
+    <!-- Table Of Employee Values -->
     <table class="table table-striped">
         <thead>
             <tr>
@@ -37,31 +46,88 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var emp in employees)
+            @foreach (var employee in FilteredEmployees)
             {
                 <tr>
-                    <td>@emp.Id</td>
-                    <td>@emp.Name</td>
-                    <td>@emp.Position</td>
-                    <td>@emp.Department</td>
-                    <td>@emp.Salary.ToString("C")</td>
+                    <td>@employee.Id</td>
+                    <td>@employee.Name</td>
+                    <td>@employee.Position</td>
+                    <td>@employee.Department</td>
+                    <td>@employee.Salary.ToString("C")</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => EditEmployee(emp.Id)">Edit</button>
-                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteEmployee(emp.Id)">Delete</button>
+                        <!-- Edit Button-->
+                        <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => EditEmployee(employee.Id)">Edit</button>
+                        <!-- Add Button-->
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteEmployee(employee.Id)">Delete</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <!-- Pagination UI-->
+    <div>
+        <button @onclick="() => GoToPage(currentPage - 1)" disabled="@((currentPage == 1))">Previous</button>
+        <span>Page @currentPage of @totalPages</span>
+        <button @onclick="() => GoToPage(currentPage + 1)" disabled="@((currentPage == totalPages))">Next</button>
+    </div>
 }
 
 @code {
+    // Create a List of retrieved Employees from API
+    private List<Employee>? employees;
+
+    // Search Field
+    private string searchTerm = string.Empty;
+
+    // Pagination Fields
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages;
+
+    // Notification Fields
     private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
-    private List<Employee>? employees;
+    // Retrive API pagination
+    public class PagedResult<T>
+    {
+        public required List<T> Items { get; set; }
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+    }
 
+    // Search Employee Name, Position, or Department for the search term (case-insensitive)
+    private IEnumerable<Employee> FilteredEmployees =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? employees ?? Enumerable.Empty<Employee>()
+            : employees?.Where(employee =>
+                (employee.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (employee.Position?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (employee.Department?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            ) ?? Enumerable.Empty<Employee>();
+
+
+    // Load Results using Pagination settings
+    private async Task LoadEmployees()
+    {
+        var response = await Http.GetFromJsonAsync<PagedResult<Employee>>($"employees?page={currentPage}&pageSize={pageSize}");
+        employees = response?.Items;
+        pageSize = response?.PageSize ?? 0;
+        currentPage = response?.CurrentPage ?? 0;
+        totalPages = response?.TotalPages ?? 1;
+    }
+
+    // Change Page
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadEmployees();
+    }
+
+    // Notification and timer
     private async Task ShowMessage(string? success = null, string? error = null)
     {
         messageCts?.Cancel();
@@ -77,10 +143,10 @@ else
             errorMessage = null;
             StateHasChanged();
         }
-        catch (TaskCanceledException ex)
+        catch (TaskCanceledException exception)
         {
             // Just for diagnostics
-            Console.WriteLine("Message timer canceled: " + ex.Message);
+            Console.WriteLine("Message timer canceled: " + exception.Message);
         }
     }
 
@@ -92,19 +158,18 @@ else
 
         try
         {
-            employees = await Http.GetFromJsonAsync<List<Employee>>("employees");
+            await LoadEmployees();
         }
-        catch (HttpRequestException ex) when (ex.Message.Contains("CORS", StringComparison.OrdinalIgnoreCase))
+        catch (HttpRequestException exception) when (exception.Message.Contains("CORS", StringComparison.OrdinalIgnoreCase))
         {
             // CORS error handler
             employees = new List<Employee>();
-            Console.Error.WriteLine("CORS error: " + ex.Message);
+            Console.Error.WriteLine("CORS error: " + exception.Message);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            // Other generic errors
             employees = new List<Employee>();
-            Console.Error.WriteLine("General error: " + ex.Message);
+            Console.Error.WriteLine("General error: " + exception.Message);
         }
     }
 
@@ -119,8 +184,9 @@ else
     }
 
     async Task DeleteEmployee(int id)
-    {
-        successMessage = errorMessage = null; // Clear previous error
+    {   
+        // Clear previous notification
+        successMessage = errorMessage = null;
 
         var employee = employees?.FirstOrDefault(employee => employee.Id == id);
         string employeeName = employee?.Name ?? $"ID {id}";
@@ -146,9 +212,10 @@ else
                 await ShowMessage(error: $"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            await ShowMessage(error: $"Error deleting '{employeeName}' with id {id}: {ex.Message}");
+            errorMessage = $"Error deleting '{employeeName}' with id {id}: {exception.Message}";
+            Console.Error.WriteLine($"Error deleting '{employeeName}' with id {id}: {exception.Message}");
         }
     }
 

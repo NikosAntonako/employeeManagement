@@ -94,13 +94,24 @@ namespace Backend.Controllers
                 query = query.OrderBy(e => e.Id);
             }
 
+
+            // Get total count for pagination BEFORE paging
+            var totalEmployees = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalEmployees / (double)pageSize);
+
+
             var employees = await query
-                // For page 1, you want to skip 0 items: (1 - 1) * pageSize = 0 etc
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return employees;
+            return Ok(new
+            {
+                Items = employees,
+                PageSize = pageSize,
+                CurrentPage = pageNumber,
+                TotalPages = totalPages
+            });
         }
 
         /// <summary>
