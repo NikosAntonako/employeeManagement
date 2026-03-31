@@ -1,0 +1,38 @@
+﻿@* Frontend\Components\Notification.razor *@
+@implements IDisposable;
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert @GetAlertClass()" role="alert">@Message</div>
+}
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string AlertType { get; set; } = "success";
+    [Parameter] public int Duration { get; set; } = 5000; // milliseconds
+
+    private CancellationTokenSource? cancellationTokenSource;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cancellationTokenSource?.Cancel();
+        cancellationTokenSource = new CancellationTokenSource();
+
+        if (!string.IsNullOrEmpty(Message))
+        {
+            try
+            {
+                await Task.Delay(Duration, cancellationTokenSource.Token);
+                Message = null;
+                StateHasChanged();
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore cancellation
+            }
+        }
+    }
+
+    private string GetAlertClass() => $"alert alert-{AlertType}";
+
+    void IDisposable.Dispose() => cancellationTokenSource?.Cancel();
+}
