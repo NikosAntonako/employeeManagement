@@ -9,7 +9,7 @@ namespace Backend.Controllers
     /// Provides endpoints for CRUD operations on employees using a database.
     /// </summary>
     [ApiController]
-    [Route("api/employees")]
+    [Route("api/[Controller]")]
     public class EmployeeController(EmployeeContext context) : ControllerBase
     {
         /// <summary>
@@ -22,7 +22,7 @@ namespace Backend.Controllers
         /// <param name="department">Optional filter by department.</param>
         /// <param name="position">Optional filter by position.</param>
         /// <returns>A paged, optionally filtered and sorted collection of employees.</returns>
-        [HttpGet]
+        [HttpGet(template: "GetAll")]
         public async Task<ActionResult<IEnumerable<Employee>>> GetAll(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -41,12 +41,12 @@ namespace Backend.Controllers
 
             if (!string.IsNullOrEmpty(department))
             {
-                query = query.Where(e => e.Department == department);
+                query = query.Where(employee => employee.Department == department);
             }
 
             if (!string.IsNullOrEmpty(position))
             {
-                query = query.Where(e => e.Position == position);
+                query = query.Where(employee => employee.Position == position);
             }
 
             bool sorted = false;
@@ -57,11 +57,11 @@ namespace Backend.Controllers
                 switch (sortBySalary.ToLowerInvariant())
                 {
                     case "asc":
-                        query = query.OrderBy(e => e.Salary);
+                        query = query.OrderBy(employee => employee.Salary);
                         sorted = true;
                         break;
                     case "desc":
-                        query = query.OrderByDescending(e => e.Salary);
+                        query = query.OrderByDescending(employee => employee.Salary);
                         sorted = true;
                         break;
                     default:
@@ -76,13 +76,13 @@ namespace Backend.Controllers
                 {
                     case "asc":
                         query = sorted
-                            ? ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name)
-                            : query.OrderBy(e => e.Name);
+                            ? ((IOrderedQueryable<Employee>)query).ThenBy(employee => employee.Name)
+                            : query.OrderBy(employee => employee.Name);
                         break;
                     case "desc":
                         query = sorted
-                            ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
-                            : query.OrderByDescending(e => e.Name);
+                            ? ((IOrderedQueryable<Employee>)query).ThenByDescending(employee => employee.Name)
+                            : query.OrderByDescending(employee => employee.Name);
                         break;
                     default:
                         return BadRequest(new { message = "sortByName must be 'asc' or 'desc'." });
@@ -91,7 +91,7 @@ namespace Backend.Controllers
 
             if (!sorted && string.IsNullOrEmpty(sortByName))
             {
-                query = query.OrderBy(e => e.Id);
+                query = query.OrderBy(employee => employee.Id);
             }
 
 
@@ -118,14 +118,14 @@ namespace Backend.Controllers
         /// <param name="id">The ID of the employee.</param>
         /// <returns>The employee with the specified ID, 
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpGet("{id}")]
+        [HttpGet(template: "Get{id}")]
         public async Task<ActionResult<Employee>> GetById(int id)
         {
             var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found.", id });
 
-            return employee;
+            return Ok(employee);
         }
 
         /// <summary>
@@ -133,14 +133,9 @@ namespace Backend.Controllers
         /// </summary>
         /// <param name="employee">The employee object to create.</param>
         /// <returns>The created employee and a location header with the URI of the new resource.</returns>
-        [HttpPost]
+        [HttpPost(template: "Post")]
         public async Task<ActionResult<Employee>> Create(Employee employee)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             employee.Id = 0;
             context.Employees.Add(employee);
             await context.SaveChangesAsync();
@@ -155,14 +150,9 @@ namespace Backend.Controllers
         /// <param name="updatedEmployee">The updated employee object.</param>
         /// <returns>The updated employee object,
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpPut("{id}")]
+        [HttpPut(template: "Put{id}")]
         public async Task<ActionResult<Employee>> Update(int id, Employee updatedEmployee)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var employee = await context.Employees.FindAsync(id);
             if (employee == null)
                 return NotFound();
@@ -183,7 +173,7 @@ namespace Backend.Controllers
         /// <param name="id">The ID of the employee to delete.</param>
         /// <returns>A 204 No Content response if the deletion is successful, 
         /// or a 404 Not Found response if the employee does not exist.</returns>
-        [HttpDelete("{id}")]
+        [HttpDelete(template: "Delete{id}")]
         public async Task<ActionResult<Employee>> Delete(int id)
         {
             var employee = await context.Employees.FindAsync(id);

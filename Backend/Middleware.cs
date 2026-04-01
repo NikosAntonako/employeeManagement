@@ -2,16 +2,6 @@
 {
     public static class Middleware
     {
-        public static RequestDelegate LoggingMiddleware(RequestDelegate next)
-        {
-            return async context =>
-            {
-                Console.WriteLine($"Request: {context.Request.Method} {context.Request.Path}");
-                await next(context);
-                Console.WriteLine($"Request: {context.Response.StatusCode}");
-            };
-        }
-
         public static RequestDelegate ExceptionHandlingMiddleware(RequestDelegate next)
         {
             return async context =>
@@ -20,12 +10,22 @@
                 {
                     await next(context);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    Console.WriteLine($"Exception: {ex.Message}");
+                    Console.WriteLine($"An unexpected error occurred in middleware. {exception.Message}");
                     context.Response.StatusCode = 500;
-                    await context.Response.WriteAsync("An unexpected error occurred.");
+                    await context.Response.WriteAsync($"An unexpected error occurred in middleware. {exception.Message}");
                 }
+            };
+        }
+
+        public static RequestDelegate LoggingMiddleware(RequestDelegate next)
+        {
+            return async context =>
+            {
+                Console.WriteLine($"Request: {context.Request.Method} {context.Request.Path}");
+                await next(context);
+                Console.WriteLine($"Request: {context.Response.StatusCode}");
             };
         }
     }
