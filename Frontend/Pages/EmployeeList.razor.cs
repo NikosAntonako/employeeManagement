@@ -131,7 +131,7 @@ public partial class EmployeeList : ComponentBase
                 (employee.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (employee.Position?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (employee.Department?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-            ) ?? Enumerable.Empty<Employee>();
+            ) ?? [];
 
     // Load Results using Pagination settings
     private async Task LoadEmployees()
