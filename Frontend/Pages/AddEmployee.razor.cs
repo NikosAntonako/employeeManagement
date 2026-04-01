@@ -18,7 +18,6 @@ public partial class AddEmployee : ComponentBase
     private EmployeeInput employee = new();
 
     // Notification Fields
-    private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 

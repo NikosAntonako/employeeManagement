@@ -22,7 +22,6 @@ public partial class EditEmployee : ComponentBase
     private EmployeeInput? employee;
 
     // Notification Fields
-    private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 

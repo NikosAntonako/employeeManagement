@@ -1,5 +1,6 @@
 ﻿@* Frontend\Components\Notification.razor *@
 @implements IDisposable
+@inject ILogger<Notification> Logger
 
 @if (!string.IsNullOrEmpty(Message))
 {
@@ -27,7 +28,7 @@
             }
             catch (TaskCanceledException)
             {
-                // Ignore cancellation
+                Logger.LogWarning("Notification auto-dismiss was cancelled.");
             }
         }
     }

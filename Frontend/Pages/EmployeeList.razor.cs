@@ -26,7 +26,6 @@ public partial class EmployeeList : ComponentBase
     private int totalPages;
 
     // Notification Fields
-    private CancellationTokenSource? messageCts;
     private string? successMessage;
     private string? errorMessage;
 
