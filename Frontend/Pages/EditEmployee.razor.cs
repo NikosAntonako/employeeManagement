@@ -35,7 +35,7 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            employee = await _httpClient.GetFromJsonAsync<EmployeeInput>($"employees/{Id}");
+            employee = await _httpClient.GetFromJsonAsync<EmployeeInput>($"employee/Get{Id}");
 
         }
         catch (Exception exception)
@@ -54,7 +54,7 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.PutAsJsonAsync($"employees/{Id}", employee);
+            var response = await _httpClient.PutAsJsonAsync($"employee/Put{Id}", employee);
 
             if (response.IsSuccessStatusCode)
             {

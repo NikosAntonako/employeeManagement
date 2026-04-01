@@ -5,12 +5,12 @@
 
 <!-- Notification Area -->
 <Notification Message="@successMessage" AlertType="success"/>
-<Notification Message="@errorMessage" AlertType="success"/>
+<Notification Message="@errorMessage" AlertType="danger"/>
 
 <!-- Filter Form -->
 <div class="mb-3">
     <input class="form-control" placeholder="Search by Name, Position or Department"
-           @bind="searchTerm" @bind:event="oninput" />
+           @bind="SearchTerm" @bind:event="oninput" />
 </div>
 
 <button class="btn btn-primary mb-3" @onclick="AddEmployee">Add New Employee</button>
@@ -22,7 +22,7 @@
         <span class="visually-hidden">Loading...</span>
     </div>
 }
-else if (!FilteredEmployees.Any())
+else if (!(employees?.Any() ?? false))
 {
     <p>No employees found.</p>
 }
@@ -41,7 +41,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var employee in FilteredEmployees)
+            @foreach (var employee in employees ?? Enumerable.Empty<Employee>())
             {
                 <tr>
                     <td>@employee.Id</td>

@@ -34,7 +34,7 @@ public partial class AddEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("employees", employee);
+            var response = await _httpClient.PostAsJsonAsync("employee/Post", employee);
 
             if (response.IsSuccessStatusCode)
             {

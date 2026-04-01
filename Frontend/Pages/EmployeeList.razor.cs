@@ -18,7 +18,19 @@ public partial class EmployeeList : ComponentBase
     private List<Employee>? employees;
 
     // Search Field
-    private string searchTerm = string.Empty;
+    private string SearchTerm
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                currentPage = 1; // Reset to first page on new search
+                _ = LoadEmployees();
+            }
+        }
+    } = string.Empty;
 
     // Pagination Fields
     private int currentPage = 1;
@@ -63,7 +75,7 @@ public partial class EmployeeList : ComponentBase
         }
         catch (Exception exception)
         {
-            employees = new List<Employee>();
+            employees = [];
             Console.Error.WriteLine("General error: " + exception.Message);
         }
     }
@@ -97,7 +109,7 @@ public partial class EmployeeList : ComponentBase
 
         try
         {
-            var response = await _httpClient.DeleteAsync($"employees/{id}");
+            var response = await _httpClient.DeleteAsync($"employee/Delete{id}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -123,31 +135,30 @@ public partial class EmployeeList : ComponentBase
     }
 
     // 6. Private helper methods
-    // Search Employee Name, Position, or Department for the search term (case-insensitive)
-    private IEnumerable<Employee> FilteredEmployees =>
-        string.IsNullOrWhiteSpace(searchTerm)
-            ? employees ?? Enumerable.Empty<Employee>()
-            : employees?.Where(employee =>
-                (employee.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (employee.Position?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (employee.Department?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-            ) ?? [];
-
     // Load Results using Pagination settings
     private async Task LoadEmployees()
     {
-        // turn loading on
         isLoading = true;
 
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<PagedResult<Employee>>($"employees?pageNumber={currentPage}&pageSize={pageSize}");
-            employees = response?.Items;
+            var query = new Dictionary<string, string?>
+            {
+                ["pageNumber"] = currentPage.ToString(),
+                ["pageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+                query["searchTerm"] = SearchTerm;
+
+            var url = QueryHelpers.AddQueryString("employee/GetAll", query);
+
+            var response = await _httpClient.GetFromJsonAsync<PagedResult<Employee>>(url);
+            employees = response?.Items ?? [];
             totalPages = response?.TotalPages ?? 1;
         }
         finally
         {
-            // turn loading off
             isLoading = false;
         }
     }
