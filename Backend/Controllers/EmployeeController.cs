@@ -12,6 +12,13 @@ namespace Backend.Controllers
     [Route("api/[Controller]")]
     public class EmployeeController(EmployeeContext context) : ControllerBase
     {
+        // Middleware Test
+        [HttpGet("Throw")]
+        public ActionResult Throw()
+        {
+            throw new Exception("Test exception from controller");
+        }
+
         /// <summary>
         /// Retrieves all employees from the database with optional filtering, paging, and sorting.
         /// </summary>
