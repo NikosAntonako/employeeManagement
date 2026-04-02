@@ -13,7 +13,6 @@ namespace Backend.Data;
 public class EmployeeContext(DbContextOptions<EmployeeContext> options) : DbContext(options)
 {
     public DbSet<Employee> Employees { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Employee>()
