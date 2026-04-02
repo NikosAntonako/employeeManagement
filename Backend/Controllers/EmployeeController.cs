@@ -1,8 +1,10 @@
+using Backend.Dtos;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
+
 /// <summary>
 /// Represents the controller for managing Employee resources in the Employee Management application.
 /// Provides endpoints for CRUD operations on employees using a database.
@@ -12,7 +14,7 @@ namespace Backend.Controllers;
 public class EmployeeController(IEmployeeService service) : ControllerBase
 {
     // Middleware Test
-    [HttpGet("Throw")]
+    [HttpGet(template: "Throw")]
     public ActionResult Throw()
     {
         throw new Exception("Test exception from controller");
@@ -28,29 +30,10 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="department">Optional filter by department.</param>
     /// <param name="position">Optional filter by position.</param>
     /// <returns>A paged, optionally filtered and sorted collection of employees.</returns>
-    [HttpGet("GetAll")]
-    public async Task<ActionResult> GetAll(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] string? sortBySalary = null,
-        [FromQuery] string? sortByName = null,
-        [FromQuery] string? department = null,
-        [FromQuery] string? position = null,
-        [FromQuery] string? searchTerm = null
-        )
+    [HttpGet(template: "GetAll")]
+    public async Task<ActionResult> GetAll([FromQuery] EmployeeQueryDto query)
     {
-        if (pageNumber < 1 || pageSize < 1)
-            return BadRequest(new { message = "pageNumber and pageSize must be greater than 0." });
-
-        var (items, totalPages) = await service.GetAllAsync(
-            pageNumber,
-            pageSize,
-            sortBySalary,
-            sortByName,
-            department,
-            position,
-            searchTerm
-            );
+        var (items, totalPages) = await service.GetAllAsync(query);
         return Ok(new { Items = items, TotalPages = totalPages });
     }
 
@@ -60,7 +43,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="id">The ID of the employee.</param>
     /// <returns>The employee with the specified ID, 
     /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpGet("Get{id}")]
+    [HttpGet(template: "Get{id}")]
     public async Task<ActionResult> GetById(int id)
     {
         var employee = await service.GetByIdAsync(id);
@@ -74,7 +57,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// </summary>
     /// <param name="employee">The employee object to create.</param>
     /// <returns>The created employee and a location header with the URI of the new resource.</returns>
-    [HttpPost("Post")]
+    [HttpPost(template: "Post")]
     public async Task<ActionResult> Create(Employee employee)
     {
         var created = await service.CreateAsync(employee);
@@ -88,7 +71,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="updatedEmployee">The updated employee object.</param>
     /// <returns>The updated employee object,
     /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpPut("Put{id}")]
+    [HttpPut(template: "Put{id}")]
     public async Task<ActionResult> Update(int id, Employee updatedEmployee)
     {
         var employee = await service.UpdateAsync(id, updatedEmployee);
@@ -103,7 +86,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="id">The ID of the employee to delete.</param>
     /// <returns>A 204 No Content response if the deletion is successful, 
     /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpDelete("Delete{id}")]
+    [HttpDelete(template: "Delete{id}")]
     public async Task<ActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);

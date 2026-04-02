@@ -1,4 +1,5 @@
 ﻿using Backend.Data;
+using Backend.Dtos;
 using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,39 +9,31 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
 {
     private readonly EmployeeContext _context = context;
 
-    public async Task<(IEnumerable<Employee> Items, int TotalPages)> GetAllAsync(
-        int pageNumber,
-        int pageSize,
-        string? sortBySalary,
-        string? sortByName,
-        string? department,
-        string? position,
-        string? searchTerm
-        )
+    public async Task<(IEnumerable<Employee> Items, int TotalPages)> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = _context.Employees;
 
-        if (!string.IsNullOrEmpty(department))
-            query = query.Where(e => e.Department == department);
-        if (!string.IsNullOrEmpty(position))
-            query = query.Where(e => e.Position == position);
+        if (!string.IsNullOrWhiteSpace(request.Department))
+            query = query.Where(e => e.Department == request.Department);
 
-        // Filter by search term (case-insensitive)
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        if (!string.IsNullOrWhiteSpace(request.Position))
+            query = query.Where(e => e.Position == request.Position);
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            var pattern = $"%{searchTerm}%";
+            var lowerTerm = request.SearchTerm.ToLower();
+
             query = query.Where(e =>
-                EF.Functions.Like(e.Name, pattern) ||
-                EF.Functions.Like(e.Position, pattern) ||
-                EF.Functions.Like(e.Department, pattern));
+                e.Name.ToLower().StartsWith(lowerTerm) ||
+                e.Position.ToLower().StartsWith(lowerTerm) ||
+                e.Department.ToLower().StartsWith(lowerTerm));
         }
 
-        bool sorted = false;
+        var sorted = false;
 
-        // Sort By Salary
-        if (!string.IsNullOrEmpty(sortBySalary))
+        if (!string.IsNullOrWhiteSpace(request.SortBySalary))
         {
-            switch (sortBySalary.ToLowerInvariant())
+            switch (request.SortBySalary.ToLowerInvariant())
             {
                 case "asc":
                     query = query.OrderBy(e => e.Salary);
@@ -50,34 +43,37 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
                     query = query.OrderByDescending(e => e.Salary);
                     sorted = true;
                     break;
-                default:
-                    // No sorting applied if value is invalid
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SortByName))
+        {
+            switch (request.SortByName.ToLowerInvariant())
+            {
+                case "asc":
+                    query = sorted
+                        ? ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name)
+                        : query.OrderBy(e => e.Name);
+                    break;
+
+                case "desc":
+                    query = sorted
+                        ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
+                        : query.OrderByDescending(e => e.Name);
                     break;
             }
         }
 
-        // Sort By Name
-        if (!string.IsNullOrEmpty(sortByName))
-        {
-            switch (sortByName.ToLowerInvariant())
-            {
-                case "asc":
-                    query = sorted ? ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name) : query.OrderBy(e => e.Name);
-                    break;
-                case "desc":
-                    query = sorted ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name) : query.OrderByDescending(e => e.Name);
-                    break;
-                default:
-                    // No sorting applied if value is invalid
-                    break;
-            }
-        }
-        if (!sorted && string.IsNullOrEmpty(sortByName))
+        if (!sorted && string.IsNullOrWhiteSpace(request.SortByName))
             query = query.OrderBy(e => e.Id);
 
         var totalEmployees = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalEmployees / (double)pageSize);
-        var employees = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        var totalPages = (int)Math.Ceiling(totalEmployees / (double)request.PageSize);
+
+        var employees = await query
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync();
 
         return (employees, totalPages);
     }
@@ -88,16 +84,13 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
     {
         employee.Id = 0;
         _context.Employees.Add(employee);
-
         await _context.SaveChangesAsync();
-
         return employee;
     }
 
     public async Task<Employee?> UpdateAsync(int id, Employee updatedEmployee)
     {
         var employee = await _context.Employees.FindAsync(id);
-
         if (employee == null) return null;
 
         employee.Name = updatedEmployee.Name;
@@ -106,20 +99,16 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
         employee.Salary = updatedEmployee.Salary;
 
         await _context.SaveChangesAsync();
-
         return employee;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
         var employee = await _context.Employees.FindAsync(id);
-
         if (employee == null) return false;
 
         _context.Employees.Remove(employee);
-
         await _context.SaveChangesAsync();
-
         return true;
     }
 }

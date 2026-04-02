@@ -17,20 +17,21 @@ public partial class EmployeeList : ComponentBase
     // 2. Fields and properties
     private List<Employee>? employees;
 
-    // Search Field
+    // Search Field (backing field + property)
+    private string _searchTerm = string.Empty;
     private string SearchTerm
     {
-        get;
+        get => _searchTerm;
         set
         {
-            if (field != value)
+            if (_searchTerm != value)
             {
-                field = value;
+                _searchTerm = value;
                 currentPage = 1; // Reset to first page on new search
                 _ = LoadEmployees();
             }
         }
-    } = string.Empty;
+    }
 
     // Pagination Fields
     private int currentPage = 1;
@@ -105,7 +106,10 @@ public partial class EmployeeList : ComponentBase
         bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete employee '{employeeName}' with id {id}?");
 
         if (!confirmed)
+        {
+            isLoading = false;
             return;
+        }
 
         try
         {
@@ -171,6 +175,31 @@ public partial class EmployeeList : ComponentBase
 
         currentPage = page;
         await LoadEmployees();
+    }
+
+    private CancellationTokenSource? _searchCts;
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1;
+
+        _searchCts?.Cancel();
+        _searchCts = new();
+
+        try
+        {
+            await Task.Delay(250, _searchCts.Token);
+            await LoadEmployees();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            errorMessage = $"Search failed: {exception.Message}";
+            employees = [];
+        }
     }
 
     // 7. Nested classes

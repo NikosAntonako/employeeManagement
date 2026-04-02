@@ -9,8 +9,10 @@
 
 <!-- Filter Form -->
 <div class="mb-3">
-    <input class="form-control" placeholder="Search by Name, Position or Department"
-           @bind="SearchTerm" @bind:event="oninput" />
+    <input class="form-control"
+           placeholder="Search by Name, Position or Department"
+           value="@SearchTerm"
+           @oninput="OnSearchInput" />
 </div>
 
 <button class="btn btn-primary mb-3" @onclick="AddEmployee">Add New Employee</button>

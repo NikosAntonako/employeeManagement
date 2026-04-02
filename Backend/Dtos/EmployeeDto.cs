@@ -2,7 +2,7 @@
 
 namespace Backend.Dtos;
 
-public class EmployeeDto
+public sealed class EmployeeDto
 {
     [Required(ErrorMessage = "Name is required.")]
     [MinLength(1, ErrorMessage = "Name cannot be empty.")]
