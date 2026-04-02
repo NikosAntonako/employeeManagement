@@ -1,4 +1,5 @@
 ﻿using Frontend.Models;
+using Frontend.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
@@ -117,7 +118,7 @@ public partial class EmployeeList : ComponentBase
             }
             else
             {
-                errorMessage = $"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.";
+                errorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
             }
         }
         catch (Exception exception)
@@ -151,9 +152,21 @@ public partial class EmployeeList : ComponentBase
 
             var url = QueryHelpers.AddQueryString("employee/GetAll", query);
 
-            var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<EmployeeViewModel>>>(url);
-            employees = response?.Data?.Items.ToList() ?? [];
-            totalPages = response?.Data?.TotalPages ?? 1;
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<PagedResult<EmployeeViewModel>>();
+                employees = result?.Items.ToList() ?? [];
+                totalPages = result?.TotalPages ?? 1;
+                errorMessage = null;
+            }
+            else
+            {
+                employees = [];
+                totalPages = 1;
+                errorMessage = await response.GetErrorMessageAsync("Failed to load employees.");
+            }
         }
         finally
         {

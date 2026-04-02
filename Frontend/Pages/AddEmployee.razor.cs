@@ -1,4 +1,5 @@
 ﻿using Frontend.Models;
+using Frontend.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -38,13 +39,12 @@ public partial class AddEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var createdEmployee = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
-                successMessage = $"New Employee '{createdEmployee?.Data?.Name ?? employee.Name}' with id: {createdEmployee?.Data?.Id} was added successfully.";
+                var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+                successMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' with id: {createdEmployee?.Id} was added successfully.";
             }
             else
             {
-                var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
-                errorMessage = errorResponse?.Message ?? $"Failed to add employee '{employee.Name}'. Please check your input and try again.";
+                errorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{employee.Name}'. Please check your input and try again.");
             }
         }
         catch (Exception exception)

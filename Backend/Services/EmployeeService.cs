@@ -1,5 +1,4 @@
 ﻿using Backend.Data;
-using Backend.Common;
 using Backend.Dtos;
 using Backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +9,7 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
 {
     private readonly EmployeeContext _context = context;
 
-    public async Task<Result<PagedResultDto<EmployeeResponseDto>>> GetAllAsync(EmployeeQueryDto request)
+    public async Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = _context.Employees.AsNoTracking();
 
@@ -78,27 +77,23 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
 
         var items = employees.Select(MapToResponse).ToList();
 
-        return Result<PagedResultDto<EmployeeResponseDto>>.CreateSuccess(
-            new PagedResultDto<EmployeeResponseDto>
-            {
-                Items = items,
-                TotalPages = totalPages
-            },
-            "Employees retrieved successfully.");
+        return new PagedResultDto<EmployeeResponseDto>
+        {
+            Items = items,
+            TotalPages = totalPages
+        };
     }
 
-    public async Task<Result<EmployeeResponseDto>> GetByIdAsync(int id)
+    public async Task<EmployeeResponseDto?> GetByIdAsync(int id)
     {
         var employee = await _context.Employees
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == id);
 
-        return employee == null
-            ? Result<EmployeeResponseDto>.Failure("Employee not found.", StatusCodes.Status404NotFound)
-            : Result<EmployeeResponseDto>.CreateSuccess(MapToResponse(employee), "Employee retrieved successfully.");
+        return employee == null ? null : MapToResponse(employee);
     }
 
-    public async Task<Result<EmployeeResponseDto>> CreateAsync(EmployeeDto employee)
+    public async Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee)
     {
         var newEmployee = new Employee
         {
@@ -111,17 +106,14 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
         _context.Employees.Add(newEmployee);
         await _context.SaveChangesAsync();
 
-        return Result<EmployeeResponseDto>.CreateSuccess(
-            MapToResponse(newEmployee),
-            "Employee created successfully.",
-            StatusCodes.Status201Created);
+        return MapToResponse(newEmployee);
     }
 
-    public async Task<Result<EmployeeResponseDto>> UpdateAsync(int id, EmployeeDto updatedEmployee)
+    public async Task<EmployeeResponseDto?> UpdateAsync(int id, EmployeeDto updatedEmployee)
     {
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null)
-            return Result<EmployeeResponseDto>.Failure("Employee not found.", StatusCodes.Status404NotFound);
+            return null;
 
         employee.Name = updatedEmployee.Name;
         employee.Position = updatedEmployee.Position;
@@ -130,19 +122,19 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
 
         await _context.SaveChangesAsync();
 
-        return Result<EmployeeResponseDto>.CreateSuccess(MapToResponse(employee), "Employee updated successfully.");
+        return MapToResponse(employee);
     }
 
-    public async Task<Result<object>> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null)
-            return Result<object>.Failure("Employee not found.", StatusCodes.Status404NotFound);
+            return false;
 
         _context.Employees.Remove(employee);
         await _context.SaveChangesAsync();
 
-        return Result<object>.CreateSuccess(new { Id = id }, "Employee deleted successfully.");
+        return true;
     }
 
     private static EmployeeResponseDto MapToResponse(Employee employee)

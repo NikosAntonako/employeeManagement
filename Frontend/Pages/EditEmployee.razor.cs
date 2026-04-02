@@ -1,4 +1,5 @@
 ﻿using Frontend.Models;
+using Frontend.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -35,11 +36,18 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<ApiResponse<EmployeeViewModel>>($"employee/Get/{Id}");
-            var employeeData = response?.Data;
+            var response = await _httpClient.GetAsync($"employee/Get/{Id}");
 
-            if (employeeData != null)
+            if (response.IsSuccessStatusCode)
             {
+                var employeeData = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+
+                if (employeeData == null)
+                {
+                    errorMessage = $"Failed to load employee with id {Id}.";
+                    return;
+                }
+
                 employee = new EmployeeInput
                 {
                     Name = employeeData.Name,
@@ -47,6 +55,10 @@ public partial class EditEmployee : ComponentBase
                     Department = employeeData.Department,
                     Salary = employeeData.Salary
                 };
+            }
+            else
+            {
+                errorMessage = await response.GetErrorMessageAsync($"Failed to load employee with id {Id}.");
             }
         }
         catch (Exception exception)
@@ -69,13 +81,12 @@ public partial class EditEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var updatedEmployee = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
-                successMessage = updatedEmployee?.Message ?? $"Employee with id {Id} was updated successfully.";
+                var updatedEmployee = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+                successMessage = $"Employee '{updatedEmployee?.Name ?? employee?.Name}' with id {Id} was updated successfully.";
             }
             else
             {
-                var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
-                errorMessage = errorResponse?.Message ?? $"Failed to update employee with id {Id}.";
+                errorMessage = await response.GetErrorMessageAsync($"Failed to update employee with id {Id}.");
             }
         }
         catch (Exception exception)

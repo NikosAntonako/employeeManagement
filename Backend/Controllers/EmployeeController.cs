@@ -1,4 +1,3 @@
-using Backend.Common;
 using Backend.Dtos;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace Backend.Controllers;
 /// retrieve, update, and delete employees.
 /// </summary>
 /// <remarks>This controller exposes RESTful endpoints for employee management and relies on dependency injection
-/// for the employee service. All endpoints return standardized response models and support asynchronous operations. The
+/// for the employee service. All endpoints return standard HTTP responses and support asynchronous operations. The
 /// controller is intended to be used in an ASP.NET Core Web API application.</remarks>
 /// <param name="service">The employee service used to perform business operations related to employee data. Must not be null.</param>
 [ApiController]
@@ -23,7 +22,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <returns>This method does not return a value because it always throws an exception.</returns>
     /// <exception cref="Exception">Always thrown to simulate an error condition for testing purposes.</exception>
     [HttpGet(template: "ThrowException")]
-    public ActionResult<ResponseModel<object>> Throw()
+    public IActionResult Throw()
     {
         throw new Exception("Test exception from controller");
     }
@@ -32,13 +31,12 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// Retrieves a paged list of employees that match the specified query parameters.
     /// </summary>
     /// <param name="query">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
-    /// <returns>An asynchronous operation that returns an HTTP action result containing a response model with a paged list of
-    /// employee data transfer objects.</returns>
+    /// <returns>An asynchronous operation that returns an HTTP action result containing a paged list of employee data transfer objects.</returns>
     [HttpGet(template: "GetAll")]
-    public async Task<ActionResult<ResponseModel<PagedResultDto<EmployeeResponseDto>>>> GetAll([FromQuery] EmployeeQueryDto query)
+    public async Task<ActionResult<PagedResultDto<EmployeeResponseDto>>> GetAll([FromQuery] EmployeeQueryDto query)
     {
         var result = await service.GetAllAsync(query);
-        return CreateResponse(result);
+        return Ok(result);
     }
 
     /// <summary>
@@ -46,26 +44,31 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// </summary>
     /// <param name="id">The unique identifier of the employee to retrieve. Must be a positive integer.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an <see
-    /// cref="ActionResult{T}">ActionResult</see> with a <see cref="ResponseModel{T}">ResponseModel</see> of <see
-    /// cref="EmployeeResponseDto"/> containing the employee details if found; otherwise, an appropriate error response.</returns>
+    /// cref="ActionResult{T}">ActionResult</see> of <see cref="EmployeeResponseDto"/> containing the employee details if found;
+    /// otherwise, an appropriate error response.</returns>
     [HttpGet(template: "Get/{id:int}")]
-    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> GetById(int id)
+    public async Task<ActionResult<EmployeeResponseDto>> GetById(int id)
     {
         var result = await service.GetByIdAsync(id);
-        return CreateResponse(result);
+        return result == null
+            ? NotFound(new ProblemDetails
+            {
+                Title = "Employee not found.",
+                Status = StatusCodes.Status404NotFound
+            })
+            : Ok(result);
     }
 
     /// <summary>
     /// Creates a new employee record using the provided employee data.
     /// </summary>
     /// <param name="employee">The employee data to create. Must not be null.</param>
-    /// <returns>An asynchronous operation that returns an ActionResult containing a ResponseModel with the created employee
-    /// information.</returns>
+    /// <returns>An asynchronous operation that returns an ActionResult containing the created employee information.</returns>
     [HttpPost(template: "Post")]
-    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> Create([FromBody] EmployeeDto employee)
+    public async Task<ActionResult<EmployeeResponseDto>> Create([FromBody] EmployeeDto employee)
     {
         var result = await service.CreateAsync(employee);
-        return CreateResponse(result);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     /// <summary>
@@ -73,33 +76,37 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// </summary>
     /// <param name="id">The unique identifier of the employee to update.</param>
     /// <param name="updatedEmployee">An object containing the updated employee information. Cannot be null.</param>
-    /// <returns>An ActionResult containing a ResponseModel with the updated employee data if the update is successful;
+    /// <returns>An ActionResult containing the updated employee data if the update is successful;
     /// otherwise, an appropriate error response.</returns>
     [HttpPut(template: "Put/{id:int}")]
-    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> Update(int id, [FromBody] EmployeeDto updatedEmployee)
+    public async Task<ActionResult<EmployeeResponseDto>> Update(int id, [FromBody] EmployeeDto updatedEmployee)
     {
         var result = await service.UpdateAsync(id, updatedEmployee);
-        return CreateResponse(result);
+        return result == null
+            ? NotFound(new ProblemDetails
+            {
+                Title = "Employee not found.",
+                Status = StatusCodes.Status404NotFound
+            })
+            : Ok(result);
     }
 
     /// <summary>
     /// Deletes the resource identified by the specified ID.
     /// </summary>
     /// <param name="id">The unique identifier of the resource to delete. Must be a positive integer.</param>
-    /// <returns>An ActionResult containing a ResponseModel that indicates the outcome of the delete operation. Returns a success
-    /// response if the resource was deleted; otherwise, returns an error response.</returns>
+    /// <returns>An ActionResult that indicates the outcome of the delete operation. Returns a success response if the resource
+    /// was deleted; otherwise, returns an error response.</returns>
     [HttpDelete(template: "Delete/{id:int}")]
-    public async Task<ActionResult<ResponseModel<object>>> Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await service.DeleteAsync(id);
-        return CreateResponse(result);
-    }
-
-    private static ObjectResult CreateResponse<T>(Result<T> result)
-    {
-        return new ObjectResult(ResponseModel<T>.FromResult(result))
-        {
-            StatusCode = result.StatusCode
-        };
+        return result
+            ? NoContent()
+            : NotFound(new ProblemDetails
+            {
+                Title = "Employee not found.",
+                Status = StatusCodes.Status404NotFound
+            });
     }
 }
