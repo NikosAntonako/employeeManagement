@@ -1,13 +1,22 @@
 ﻿using Backend.Data;
 using Backend.Dtos;
 using Backend.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
-public class EmployeeService(EmployeeContext context) : IEmployeeService
+public class EmployeeService : IEmployeeService
 {
-    private readonly EmployeeContext _context = context;
+    private readonly EmployeeContext _context;
+    private readonly IConfiguration _configuration;
+
+    public EmployeeService(EmployeeContext context, IConfiguration configuration)
+    {
+        _context = context;
+        _configuration = configuration;
+    }
 
     public async Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request)
     {
@@ -23,10 +32,10 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
         {
             var lowerTerm = request.SearchTerm.ToLower();
 
-            query = query.Where(e =>
-                e.Name.ToLower().StartsWith(lowerTerm) ||
-                e.Position.ToLower().StartsWith(lowerTerm) ||
-                e.Department.ToLower().StartsWith(lowerTerm));
+            query = query.Where(employee =>
+                employee.Name.ToLower().StartsWith(lowerTerm) ||
+                employee.Position.ToLower().StartsWith(lowerTerm) ||
+                employee.Department.ToLower().StartsWith(lowerTerm));
         }
 
         var sorted = false;
@@ -86,10 +95,9 @@ public class EmployeeService(EmployeeContext context) : IEmployeeService
 
     public async Task<EmployeeResponseDto?> GetByIdAsync(int id)
     {
-        var employee = await _context.Employees
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id);
-
+        using var connection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+        const string sql = @"SELECT Id, Name, Position, Department, Salary FROM Employees WHERE Id = @Id";
+        var employee = await connection.QueryFirstOrDefaultAsync<Employee>(sql, new { Id = id });
         return employee == null ? null : MapToResponse(employee);
     }
 
