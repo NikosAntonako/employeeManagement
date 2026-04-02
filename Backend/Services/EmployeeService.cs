@@ -18,6 +18,24 @@ public class EmployeeService : IEmployeeService
         _configuration = configuration;
     }
 
+
+    /// <summary>
+    /// Creates a new EmployeeResponseDto that represents the specified employee.
+    /// </summary>
+    /// <param name="employee">The Employee instance to map to a response DTO. Cannot be null.</param>
+    /// <returns>An EmployeeResponseDto containing the data from the specified employee.</returns>
+    private static EmployeeResponseDto MapToResponse(Employee employee)
+    {
+        return new EmployeeResponseDto
+        {
+            Id = employee.Id,
+            Name = employee.Name,
+            Position = employee.Position,
+            Department = employee.Department,
+            Salary = employee.Salary
+        };
+    }
+
     public async Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = _context.Employees.AsNoTracking();
@@ -145,15 +163,4 @@ public class EmployeeService : IEmployeeService
         return true;
     }
 
-    private static EmployeeResponseDto MapToResponse(Employee employee)
-    {
-        return new EmployeeResponseDto
-        {
-            Id = employee.Id,
-            Name = employee.Name,
-            Position = employee.Position,
-            Department = employee.Department,
-            Salary = employee.Salary
-        };
-    }
 }
