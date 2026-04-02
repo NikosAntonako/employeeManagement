@@ -1,11 +1,11 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### GET employee by ID (success)
-GET {{employeeManagement_HostAddress}}/api/employees/2
+GET {{employeeManagement_HostAddress}}/api/employee/Get/2
 Accept: application/json
 ###
 
 ### GET employee by ID (not found)
-GET {{employeeManagement_HostAddress}}/api/employees/-1
+GET {{employeeManagement_HostAddress}}/api/employee/Get/-1
 Accept: application/json
 ###

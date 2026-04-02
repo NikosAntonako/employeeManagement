@@ -1,42 +1,42 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### GET first 10 employees (default paging)
-GET {{employeeManagement_HostAddress}}/api/employees
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll
 Accept: application/json
 ###
 
 ### GET employees page 2, size 5 (paging)
-GET {{employeeManagement_HostAddress}}/api/employees?pageNumber=2&pageSize=5
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?pageNumber=2&pageSize=5
 Accept: application/json
 ###
 
 ### GET employees filtered by department
-GET {{employeeManagement_HostAddress}}/api/employees?department=Sales
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?department=Sales
 Accept: application/json
 ###
 
 ### GET employees filtered by position
-GET {{employeeManagement_HostAddress}}/api/employees?position=Manager
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?position=Manager
 Accept: application/json
 ###
 
 ### GET employees filtered by department and position
-GET {{employeeManagement_HostAddress}}/api/employees?department=Sales&position=Manager
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?department=Sales&position=Manager
 Accept: application/json
 ###
 
 ### GET employees sorted by salary ascending
-GET {{employeeManagement_HostAddress}}/api/employees?sortBySalary=asc
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?sortBySalary=asc
 Accept: application/json
 ###
 
 ### GET employees sorted by name descending
-GET {{employeeManagement_HostAddress}}/api/employees?sortByName=desc
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?sortByName=desc
 Accept: application/json
 ###
 
 ### GET employees sorted by salary descending, then name ascending
-GET {{employeeManagement_HostAddress}}/api/employees?sortBySalary=desc&sortByName=asc
+GET {{employeeManagement_HostAddress}}/api/employee/GetAll?sortBySalary=desc&sortByName=asc
 Accept: application/json
 ###
 

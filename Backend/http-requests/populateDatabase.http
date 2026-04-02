@@ -1,7 +1,7 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### Create employee 1
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -13,7 +13,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 2
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -25,7 +25,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 3
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -37,7 +37,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 4
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -49,7 +49,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 5
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -61,7 +61,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 6
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -73,7 +73,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 7
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -85,7 +85,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 8
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -97,7 +97,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 9
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -109,7 +109,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 10
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -121,7 +121,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 11
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -133,7 +133,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 12
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -145,7 +145,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 13
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -157,7 +157,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 14
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -169,7 +169,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 15
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -181,7 +181,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 16
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -193,7 +193,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 17
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -205,7 +205,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 18
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -217,7 +217,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 19
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -229,7 +229,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 20
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -241,7 +241,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 21
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -253,7 +253,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 22
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -265,7 +265,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 23
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -277,7 +277,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 24
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
@@ -289,7 +289,7 @@ Content-Type: application/json
 ###
 
 ### Create employee 25
-POST {{employeeManagement_HostAddress}}/api/employees
+POST {{employeeManagement_HostAddress}}/api/employee/Post
 Content-Type: application/json
 
 {
