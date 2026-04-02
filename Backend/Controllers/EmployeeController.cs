@@ -98,7 +98,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <returns>An ActionResult that indicates the outcome of the delete operation. Returns a success response if the resource
     /// was deleted; otherwise, returns an error response.</returns>
     [HttpDelete(template: "Delete/{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
         var result = await service.DeleteAsync(id);
         return result
