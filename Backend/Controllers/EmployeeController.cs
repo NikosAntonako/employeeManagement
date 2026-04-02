@@ -22,7 +22,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <returns>This method does not return a value because it always throws an exception.</returns>
     /// <exception cref="Exception">Always thrown to simulate an error condition for testing purposes.</exception>
     [HttpGet(template: "ThrowException")]
-    public IActionResult Throw()
+    public ActionResult Throw()
     {
         throw new Exception("Test exception from controller");
     }
