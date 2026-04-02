@@ -1,5 +1,4 @@
 ﻿using Frontend.Models;
-using Frontend.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -44,7 +43,7 @@ public partial class AddEmployee : ComponentBase
             }
             else
             {
-                errorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{employee.Name}'. Please check your input and try again.");
+                errorMessage = $"Failed to add employee '{employee.Name}'. Please check your input and try again.";
             }
         }
         catch (Exception exception)

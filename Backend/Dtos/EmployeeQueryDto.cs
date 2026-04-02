@@ -11,10 +11,10 @@ namespace Backend.Dtos
     /// All properties are optional except for page number and page size, which must be positive integers.</remarks>
     public sealed class EmployeeQueryDto
     {
-        [Range(1, int.MaxValue)]
+        [Range(1, 100)]
         public int PageNumber { get; set; } = 1;
 
-        [Range(1, int.MaxValue)]
+        [Range(1, 100)]
         public int PageSize { get; set; } = 10;
 
         public string? SortBySalary { get; set; }

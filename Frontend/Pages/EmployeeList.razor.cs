@@ -1,5 +1,4 @@
 ﻿using Frontend.Models;
-using Frontend.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
@@ -118,7 +117,7 @@ public partial class EmployeeList : ComponentBase
             }
             else
             {
-                errorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
+                errorMessage = $"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.";
             }
         }
         catch (Exception exception)
@@ -165,7 +164,7 @@ public partial class EmployeeList : ComponentBase
             {
                 employees = [];
                 totalPages = 1;
-                errorMessage = await response.GetErrorMessageAsync("Failed to load employees.");
+                errorMessage = "Failed to load employees.";
             }
         }
         finally

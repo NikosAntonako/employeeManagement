@@ -7,20 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
-public class EmployeeService : IEmployeeService
+public class EmployeeService(EmployeeContext context, IConfiguration configuration) : IEmployeeService
 {
-    private readonly EmployeeContext _context;
-    private readonly IConfiguration _configuration;
-
-    public EmployeeService(EmployeeContext context, IConfiguration configuration)
-    {
-        _context = context;
-        _configuration = configuration;
-    }
-
+    private readonly EmployeeContext _context = context;
+    private readonly IConfiguration _configuration = configuration;
 
     /// <summary>
     /// Creates a new EmployeeResponseDto that represents the specified employee.
+    /// For Decoupling DRY reasons
     /// </summary>
     /// <param name="employee">The Employee instance to map to a response DTO. Cannot be null.</param>
     /// <returns>An EmployeeResponseDto containing the data from the specified employee.</returns>
@@ -41,10 +35,10 @@ public class EmployeeService : IEmployeeService
         IQueryable<Employee> query = _context.Employees.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Department))
-            query = query.Where(e => e.Department == request.Department);
+            query = query.Where(employee => employee.Department == request.Department);
 
         if (!string.IsNullOrWhiteSpace(request.Position))
-            query = query.Where(e => e.Position == request.Position);
+            query = query.Where(employee => employee.Position == request.Position);
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -63,11 +57,11 @@ public class EmployeeService : IEmployeeService
             switch (request.SortBySalary.ToLowerInvariant())
             {
                 case "asc":
-                    query = query.OrderBy(e => e.Salary);
+                    query = query.OrderBy(employee => employee.Salary);
                     sorted = true;
                     break;
                 case "desc":
-                    query = query.OrderByDescending(e => e.Salary);
+                    query = query.OrderByDescending(employee => employee.Salary);
                     sorted = true;
                     break;
             }
@@ -79,20 +73,20 @@ public class EmployeeService : IEmployeeService
             {
                 case "asc":
                     query = sorted
-                        ? ((IOrderedQueryable<Employee>)query).ThenBy(e => e.Name)
+                        ? ((IOrderedQueryable<Employee>)query).ThenBy(employee => employee.Name)
                         : query.OrderBy(e => e.Name);
                     break;
 
                 case "desc":
                     query = sorted
-                        ? ((IOrderedQueryable<Employee>)query).ThenByDescending(e => e.Name)
-                        : query.OrderByDescending(e => e.Name);
+                        ? ((IOrderedQueryable<Employee>)query).ThenByDescending(employee => employee.Name)
+                        : query.OrderByDescending(employee => employee.Name);
                     break;
             }
         }
 
         if (!sorted && string.IsNullOrWhiteSpace(request.SortByName))
-            query = query.OrderBy(e => e.Id);
+            query = query.OrderBy(employee => employee.Id);
 
         var totalEmployees = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalEmployees / (double)request.PageSize);
