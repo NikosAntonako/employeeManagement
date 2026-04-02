@@ -38,12 +38,13 @@ public partial class AddEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeResponse>();
-                successMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' with id: {createdEmployee?.Id} was added successfully.";
+                var createdEmployee = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                successMessage = $"New Employee '{createdEmployee?.Data?.Name ?? employee.Name}' with id: {createdEmployee?.Data?.Id} was added successfully.";
             }
             else
             {
-                errorMessage = $"Failed to add employee '{employee.Name}'. Please check your input and try again.";
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                errorMessage = errorResponse?.Message ?? $"Failed to add employee '{employee.Name}'. Please check your input and try again.";
             }
         }
         catch (Exception exception)
@@ -67,12 +68,5 @@ public partial class AddEmployee : ComponentBase
     protected override void OnInitialized()
     {
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
-    }
-
-    // 6. Nested classes
-    private class EmployeeResponse
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
     }
 }

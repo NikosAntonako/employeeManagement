@@ -4,9 +4,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Data;
 
 /// <summary>
-/// Represents the database context for the Employee Management application.
-/// This class is used to configure and interact with the database using Entity Framework Core.
+/// Represents the Entity Framework Core database context for managing employee data.
 /// </summary>
+/// <remarks>This context provides access to the Employees table and configures entity properties such as salary
+/// precision. It is intended to be used with dependency injection in ASP.NET Core applications.</remarks>
+/// <param name="options">The options to be used by the DbContext. These typically include configuration information such as the database
+/// provider and connection string.</param>
 public class EmployeeContext(DbContextOptions<EmployeeContext> options) : DbContext(options)
 {
     public DbSet<Employee> Employees { get; set; }

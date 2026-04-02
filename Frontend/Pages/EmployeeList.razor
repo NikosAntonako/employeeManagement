@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using Frontend.Components
+@using Frontend.Models
 
 <h3>Employee List</h3>
 
@@ -43,7 +44,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var employee in employees ?? Enumerable.Empty<Employee>())
+            @foreach (var employee in employees ?? Enumerable.Empty<EmployeeViewModel>())
             {
                 <tr>
                     <td>@employee.Id</td>

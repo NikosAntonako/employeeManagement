@@ -35,8 +35,19 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            employee = await _httpClient.GetFromJsonAsync<EmployeeInput>($"employee/Get{Id}");
+            var response = await _httpClient.GetFromJsonAsync<ApiResponse<EmployeeViewModel>>($"employee/Get/{Id}");
+            var employeeData = response?.Data;
 
+            if (employeeData != null)
+            {
+                employee = new EmployeeInput
+                {
+                    Name = employeeData.Name,
+                    Position = employeeData.Position,
+                    Department = employeeData.Department,
+                    Salary = employeeData.Salary
+                };
+            }
         }
         catch (Exception exception)
         {
@@ -54,15 +65,17 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.PutAsJsonAsync($"employee/Put{Id}", employee);
+            var response = await _httpClient.PutAsJsonAsync($"employee/Put/{Id}", employee);
 
             if (response.IsSuccessStatusCode)
             {
-                successMessage = $"Employee  with id {Id} was updated successfully.";
+                var updatedEmployee = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                successMessage = updatedEmployee?.Message ?? $"Employee with id {Id} was updated successfully.";
             }
             else
             {
-                errorMessage = $"Failed to update employee with id {Id}.";
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                errorMessage = errorResponse?.Message ?? $"Failed to update employee with id {Id}.";
             }
         }
         catch (Exception exception)

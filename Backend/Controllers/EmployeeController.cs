@@ -1,97 +1,105 @@
+using Backend.Common;
 using Backend.Dtos;
-using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
 
 /// <summary>
-/// Represents the controller for managing Employee resources in the Employee Management application.
-/// Provides endpoints for CRUD operations on employees using a database.
+/// Defines an API controller that provides endpoints for managing employee records, including operations to create,
+/// retrieve, update, and delete employees.
 /// </summary>
+/// <remarks>This controller exposes RESTful endpoints for employee management and relies on dependency injection
+/// for the employee service. All endpoints return standardized response models and support asynchronous operations. The
+/// controller is intended to be used in an ASP.NET Core Web API application.</remarks>
+/// <param name="service">The employee service used to perform business operations related to employee data. Must not be null.</param>
 [ApiController]
-[Route("api/[Controller]")]
+[Route("api/[controller]")]
 public class EmployeeController(IEmployeeService service) : ControllerBase
 {
-    // Middleware Test
-    [HttpGet(template: "Throw")]
-    public ActionResult Throw()
+    /// <summary>
+    /// Throws a test exception to demonstrate error handling in the controller.
+    /// </summary>
+    /// <returns>This method does not return a value because it always throws an exception.</returns>
+    /// <exception cref="Exception">Always thrown to simulate an error condition for testing purposes.</exception>
+    [HttpGet(template: "ThrowException")]
+    public ActionResult<ResponseModel<object>> Throw()
     {
         throw new Exception("Test exception from controller");
     }
 
     /// <summary>
-    /// Retrieves all employees from the database with optional filtering, paging, and sorting.
+    /// Retrieves a paged list of employees that match the specified query parameters.
     /// </summary>
-    /// <param name="pageNumber">The page number for pagination (default is 1).</param>
-    /// <param name="pageSize">The number of employees per page (default is 10).</param>
-    /// <param name="sortBySalary">Sorts employees by salary ("asc" or "desc").</param>
-    /// <param name="sortByName">Sorts employees by name ("asc" or "desc").</param>
-    /// <param name="department">Optional filter by department.</param>
-    /// <param name="position">Optional filter by position.</param>
-    /// <returns>A paged, optionally filtered and sorted collection of employees.</returns>
+    /// <param name="query">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
+    /// <returns>An asynchronous operation that returns an HTTP action result containing a response model with a paged list of
+    /// employee data transfer objects.</returns>
     [HttpGet(template: "GetAll")]
-    public async Task<ActionResult> GetAll([FromQuery] EmployeeQueryDto query)
+    public async Task<ActionResult<ResponseModel<PagedResultDto<EmployeeResponseDto>>>> GetAll([FromQuery] EmployeeQueryDto query)
     {
-        var (items, totalPages) = await service.GetAllAsync(query);
-        return Ok(new { Items = items, TotalPages = totalPages });
+        var result = await service.GetAllAsync(query);
+        return CreateResponse(result);
     }
 
     /// <summary>
-    /// Retrieves an employee by their ID.
+    /// Retrieves the employee details for the specified identifier.
     /// </summary>
-    /// <param name="id">The ID of the employee.</param>
-    /// <returns>The employee with the specified ID, 
-    /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpGet(template: "Get{id}")]
-    public async Task<ActionResult> GetById(int id)
+    /// <param name="id">The unique identifier of the employee to retrieve. Must be a positive integer.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains an <see
+    /// cref="ActionResult{T}">ActionResult</see> with a <see cref="ResponseModel{T}">ResponseModel</see> of <see
+    /// cref="EmployeeResponseDto"/> containing the employee details if found; otherwise, an appropriate error response.</returns>
+    [HttpGet(template: "Get/{id:int}")]
+    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> GetById(int id)
     {
-        var employee = await service.GetByIdAsync(id);
-        if (employee == null)
-            return NotFound(new { message = "Employee not found.", id });
-        return Ok(employee);
+        var result = await service.GetByIdAsync(id);
+        return CreateResponse(result);
     }
 
     /// <summary>
-    /// Creates a new employee and adds it to the database.
+    /// Creates a new employee record using the provided employee data.
     /// </summary>
-    /// <param name="employee">The employee object to create.</param>
-    /// <returns>The created employee and a location header with the URI of the new resource.</returns>
+    /// <param name="employee">The employee data to create. Must not be null.</param>
+    /// <returns>An asynchronous operation that returns an ActionResult containing a ResponseModel with the created employee
+    /// information.</returns>
     [HttpPost(template: "Post")]
-    public async Task<ActionResult> Create(Employee employee)
+    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> Create([FromBody] EmployeeDto employee)
     {
-        var created = await service.CreateAsync(employee);
-        return StatusCode(StatusCodes.Status201Created, created);
+        var result = await service.CreateAsync(employee);
+        return CreateResponse(result);
     }
 
     /// <summary>
-    /// Updates the details of an existing employee.
+    /// Updates the details of an existing employee with the specified identifier.
     /// </summary>
-    /// <param name="id">The ID of the employee to update.</param>
-    /// <param name="updatedEmployee">The updated employee object.</param>
-    /// <returns>The updated employee object,
-    /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpPut(template: "Put{id}")]
-    public async Task<ActionResult> Update(int id, Employee updatedEmployee)
+    /// <param name="id">The unique identifier of the employee to update.</param>
+    /// <param name="updatedEmployee">An object containing the updated employee information. Cannot be null.</param>
+    /// <returns>An ActionResult containing a ResponseModel with the updated employee data if the update is successful;
+    /// otherwise, an appropriate error response.</returns>
+    [HttpPut(template: "Put/{id:int}")]
+    public async Task<ActionResult<ResponseModel<EmployeeResponseDto>>> Update(int id, [FromBody] EmployeeDto updatedEmployee)
     {
-        var employee = await service.UpdateAsync(id, updatedEmployee);
-        if (employee == null)
-            return NotFound();
-        return Ok(employee);
+        var result = await service.UpdateAsync(id, updatedEmployee);
+        return CreateResponse(result);
     }
 
     /// <summary>
-    /// Deletes an employee by their ID.
+    /// Deletes the resource identified by the specified ID.
     /// </summary>
-    /// <param name="id">The ID of the employee to delete.</param>
-    /// <returns>A 204 No Content response if the deletion is successful, 
-    /// or a 404 Not Found response if the employee does not exist.</returns>
-    [HttpDelete(template: "Delete{id}")]
-    public async Task<ActionResult> Delete(int id)
+    /// <param name="id">The unique identifier of the resource to delete. Must be a positive integer.</param>
+    /// <returns>An ActionResult containing a ResponseModel that indicates the outcome of the delete operation. Returns a success
+    /// response if the resource was deleted; otherwise, returns an error response.</returns>
+    [HttpDelete(template: "Delete/{id:int}")]
+    public async Task<ActionResult<ResponseModel<object>>> Delete(int id)
     {
-        var deleted = await service.DeleteAsync(id);
-        if (!deleted)
-            return NotFound(new { message = "Employee not found", id });
-        return NoContent();
+        var result = await service.DeleteAsync(id);
+        return CreateResponse(result);
+    }
+
+    private static ObjectResult CreateResponse<T>(Result<T> result)
+    {
+        return new ObjectResult(ResponseModel<T>.FromResult(result))
+        {
+            StatusCode = result.StatusCode
+        };
     }
 }

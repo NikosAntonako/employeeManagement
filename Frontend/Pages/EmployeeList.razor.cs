@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Frontend.Models;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -15,7 +16,7 @@ public partial class EmployeeList : ComponentBase
     private HttpClient _httpClient = default!;
 
     // 2. Fields and properties
-    private List<Employee>? employees;
+    private List<EmployeeViewModel>? employees;
 
     // Search Field (backing field + property)
     private string _searchTerm = string.Empty;
@@ -44,13 +45,6 @@ public partial class EmployeeList : ComponentBase
 
     // Loading indicator true = on, false = off
     private bool isLoading = false;
-
-    // Retrieve API pagination
-    public class PagedResult<T>
-    {
-        public required List<T> Items { get; set; }
-        public int TotalPages { get; set; }
-    }
 
     // 3. Parameters (if any)
     // [Parameter] public int SomeParameter { get; set; }
@@ -113,7 +107,7 @@ public partial class EmployeeList : ComponentBase
 
         try
         {
-            var response = await _httpClient.DeleteAsync($"employee/Delete{id}");
+            var response = await _httpClient.DeleteAsync($"employee/Delete/{id}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -157,9 +151,9 @@ public partial class EmployeeList : ComponentBase
 
             var url = QueryHelpers.AddQueryString("employee/GetAll", query);
 
-            var response = await _httpClient.GetFromJsonAsync<PagedResult<Employee>>(url);
-            employees = response?.Items ?? [];
-            totalPages = response?.TotalPages ?? 1;
+            var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<EmployeeViewModel>>>(url);
+            employees = response?.Data?.Items.ToList() ?? [];
+            totalPages = response?.Data?.TotalPages ?? 1;
         }
         finally
         {
@@ -200,15 +194,5 @@ public partial class EmployeeList : ComponentBase
             errorMessage = $"Search failed: {exception.Message}";
             employees = [];
         }
-    }
-
-    // 7. Nested classes
-    public class Employee
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Position { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty;
-        public decimal Salary { get; set; }
     }
 }

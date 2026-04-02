@@ -1,15 +1,13 @@
-﻿using Backend.Dtos;
-using Backend.Models;
+﻿using Backend.Common;
+using Backend.Dtos;
 
 namespace Backend.Services;
 
 public interface IEmployeeService
 {
-    Task<(IEnumerable<Employee> Items, int TotalPages)> GetAllAsync
-        (
-        EmployeeQueryDto request);
-    Task<Employee?> GetByIdAsync(int id);
-    Task<Employee> CreateAsync(Employee employee);
-    Task<Employee?> UpdateAsync(int id, Employee updatedEmployee);
-    Task<bool> DeleteAsync(int id);
+    Task<Result<PagedResultDto<EmployeeResponseDto>>> GetAllAsync(EmployeeQueryDto request);
+    Task<Result<EmployeeResponseDto>> GetByIdAsync(int id);
+    Task<Result<EmployeeResponseDto>> CreateAsync(EmployeeDto employee);
+    Task<Result<EmployeeResponseDto>> UpdateAsync(int id, EmployeeDto updatedEmployee);
+    Task<Result<object>> DeleteAsync(int id);
 }
