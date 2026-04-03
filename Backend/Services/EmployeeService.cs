@@ -71,7 +71,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
                 case "asc":
                     query = sorted
                         ? ((IOrderedQueryable<Employee>)query).ThenBy(employee => employee.Name)
-                        : query.OrderBy(e => e.Name);
+                        : query.OrderBy(employee => employee.Name);
                     break;
 
                 case "desc":
