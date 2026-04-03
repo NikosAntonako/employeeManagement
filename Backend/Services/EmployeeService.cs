@@ -9,9 +9,6 @@ namespace Backend.Services;
 
 public class EmployeeService(EmployeeContext context, IConfiguration configuration) : IEmployeeService
 {
-    private readonly EmployeeContext _context = context;
-    private readonly IConfiguration _configuration = configuration;
-
     /// <summary>
     /// Creates a new EmployeeResponseDto that represents the specified employee.
     /// For Decoupling DRY reasons
@@ -32,7 +29,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
 
     public async Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request)
     {
-        IQueryable<Employee> query = _context.Employees.AsNoTracking();
+        IQueryable<Employee> query = context.Employees.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Department))
             query = query.Where(employee => employee.Department == request.Department);
@@ -107,7 +104,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
 
     public async Task<EmployeeResponseDto?> GetByIdAsync(int id)
     {
-        using var connection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+        using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         const string sql = @"SELECT Id, Name, Position, Department, Salary FROM Employees WHERE Id = @Id";
         var employee = await connection.QueryFirstOrDefaultAsync<Employee>(sql, new { Id = id });
         return employee == null ? null : MapToResponse(employee);
@@ -123,15 +120,15 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
             Salary = employee.Salary
         };
 
-        _context.Employees.Add(newEmployee);
-        await _context.SaveChangesAsync();
+        context.Employees.Add(newEmployee);
+        await context.SaveChangesAsync();
 
         return MapToResponse(newEmployee);
     }
 
     public async Task<EmployeeResponseDto?> UpdateAsync(int id, EmployeeDto updatedEmployee)
     {
-        var employee = await _context.Employees.FindAsync(id);
+        var employee = await context.Employees.FindAsync(id);
         if (employee == null)
             return null;
 
@@ -140,21 +137,20 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         employee.Department = updatedEmployee.Department;
         employee.Salary = updatedEmployee.Salary;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return MapToResponse(employee);
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var employee = await _context.Employees.FindAsync(id);
+        var employee = await context.Employees.FindAsync(id);
         if (employee == null)
             return false;
 
-        _context.Employees.Remove(employee);
-        await _context.SaveChangesAsync();
+        context.Employees.Remove(employee);
+        await context.SaveChangesAsync();
 
         return true;
     }
-
 }
