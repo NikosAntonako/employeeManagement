@@ -13,7 +13,7 @@ namespace Backend.Controllers;
 /// controller is intended to be used in an ASP.NET Core Web API application.</remarks>
 /// <param name="service">The employee service used to perform business operations related to employee data. Must not be null.</param>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[Controller]")]
 public class EmployeeController(IEmployeeService service) : ControllerBase
 {
     /// <summary>
