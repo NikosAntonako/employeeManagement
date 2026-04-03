@@ -11,21 +11,11 @@ namespace Backend.Controllers;
 /// <remarks>This controller exposes RESTful endpoints for employee management and relies on dependency injection
 /// for the employee service. All endpoints return standard HTTP responses and support asynchronous operations. The
 /// controller is intended to be used in an ASP.NET Core Web API application.</remarks>
-/// <param name="service">The employee service used to perform business operations related to employee data. Must not be null.</param>
+/// <param name="employeeService">The employee service used to perform business operations related to employee data. Must not be null.</param>
 [ApiController]
 [Route("api/[Controller]")]
-public class EmployeeController(IEmployeeService service) : ControllerBase
+public class EmployeeController(IEmployeeService employeeService) : ControllerBase
 {
-    /// <summary>
-    /// Throws a test exception to demonstrate error handling in the controller.
-    /// </summary>
-    /// <returns>This method does not return a value because it always throws an exception.</returns>
-    /// <exception cref="Exception">Always thrown to simulate an error condition for testing purposes.</exception>
-    [HttpGet(template: "ThrowException")]
-    public ActionResult Throw()
-    {
-        throw new Exception("Test exception from controller");
-    }
 
     /// <summary>
     /// Retrieves a paged list of employees that match the specified query parameters.
@@ -33,9 +23,9 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="query">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
     /// <returns>An asynchronous operation that returns an HTTP action result containing a paged list of employee data transfer objects.</returns>
     [HttpGet(template: "GetAll")]
-    public async Task<ActionResult<PagedResultDto>> GetAll([FromQuery] EmployeeQueryDto query)
+    public async Task<ActionResult<PagedResultDto>> GetAll([FromQuery] EmployeeQueryDto employeeQuery)
     {
-        var result = await service.GetAllAsync(query);
+        var result = await employeeService.GetAllAsync(employeeQuery);
         return Ok(result);
     }
 
@@ -46,17 +36,11 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <returns>A task that represents the asynchronous operation. The task result contains an <see
     /// cref="ActionResult{T}">ActionResult</see> of <see cref="EmployeeResponseDto"/> containing the employee details if found;
     /// otherwise, an appropriate error response.</returns>
-    [HttpGet(template: "Get/{id:int}")]
-    public async Task<ActionResult<EmployeeResponseDto>> GetById(int id)
+    [HttpGet(template: "GetById/{id:int}")]
+    public async Task<ActionResult<EmployeeResponseDto>> GetById([FromRoute] int id)
     {
-        var result = await service.GetByIdAsync(id);
-        return result == null
-            ? NotFound(new ProblemDetails
-            {
-                Title = "Employee not found.",
-                Status = StatusCodes.Status404NotFound
-            })
-            : Ok(result);
+        var result = await employeeService.GetByIdAsync(id);
+        return Ok(result);
     }
 
     /// <summary>
@@ -64,10 +48,10 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// </summary>
     /// <param name="employee">The employee data to create. Must not be null.</param>
     /// <returns>An asynchronous operation that returns an ActionResult containing the created employee information.</returns>
-    [HttpPost(template: "Post")]
+    [HttpPost(template: "Create")]
     public async Task<ActionResult<EmployeeResponseDto>> Create([FromBody] EmployeeDto employee)
     {
-        var result = await service.CreateAsync(employee);
+        var result = await employeeService.CreateAsync(employee);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -78,17 +62,11 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="updatedEmployee">An object containing the updated employee information. Cannot be null.</param>
     /// <returns>An ActionResult containing the updated employee data if the update is successful;
     /// otherwise, an appropriate error response.</returns>
-    [HttpPut(template: "Put/{id:int}")]
-    public async Task<ActionResult<EmployeeResponseDto>> Update(int id, [FromBody] EmployeeDto updatedEmployee)
+    [HttpPut(template: "Update/{id:int}")]
+    public async Task<ActionResult<EmployeeResponseDto>> Update([FromRoute] int id, [FromBody] EmployeeDto updatedEmployee)
     {
-        var result = await service.UpdateAsync(id, updatedEmployee);
-        return result == null
-            ? NotFound(new ProblemDetails
-            {
-                Title = "Employee not found.",
-                Status = StatusCodes.Status404NotFound
-            })
-            : Ok(result);
+        var result = await employeeService.UpdateAsync(id, updatedEmployee);
+        return Ok(result);
     }
 
     /// <summary>
@@ -98,15 +76,9 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <returns>An ActionResult that indicates the outcome of the delete operation. Returns a success response if the resource
     /// was deleted; otherwise, returns an error response.</returns>
     [HttpDelete(template: "Delete/{id:int}")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete([FromRoute] int id)
     {
-        var result = await service.DeleteAsync(id);
-        return result
-            ? NoContent()
-            : NotFound(new ProblemDetails
-            {
-                Title = "Employee not found.",
-                Status = StatusCodes.Status404NotFound
-            });
+        await employeeService.DeleteAsync(id);
+        return NoContent();
     }
 }

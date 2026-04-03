@@ -1,7 +1,7 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### PUT update employee (success)
-PUT {{employeeManagement_HostAddress}}/api/employee/Put/1
+PUT {{employeeManagement_HostAddress}}/api/Employee/Update/1
 Content-type: application/json
 Accept: application/json
 
@@ -14,7 +14,7 @@ Accept: application/json
 ###
 
 ### PUT update employee (not found)
-PUT {{employeeManagement_HostAddress}}/api/employee/Put/0
+PUT {{employeeManagement_HostAddress}}/api/Employee/Update/0
 Content-type: application/json
 Accept: application/json
 
@@ -27,7 +27,7 @@ Accept: application/json
 ###
 
 ### PUT update employee (invalid salary)
-PUT {{employeeManagement_HostAddress}}/api/employee/Put/1
+PUT {{employeeManagement_HostAddress}}/api/Employee/Update/1
 Content-type: application/json
 Accept: application/json
 

@@ -11,5 +11,5 @@ public sealed class EmployeeResponseDto
     public string Name { get; init; } = string.Empty;
     public string Position { get; init; } = string.Empty;
     public string Department { get; init; } = string.Empty;
-    public decimal Salary { get; init; }
+    public decimal? Salary { get; init; }
 }

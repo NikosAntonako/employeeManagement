@@ -42,9 +42,9 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
             var lowerTerm = request.SearchTerm.ToLower();
 
             query = query.Where(employee =>
-                employee.Name.ToLower().StartsWith(lowerTerm) ||
-                employee.Position.ToLower().StartsWith(lowerTerm) ||
-                employee.Department.ToLower().StartsWith(lowerTerm));
+                employee.Name.ToLower().Contains(lowerTerm) ||
+                employee.Position.ToLower().Contains(lowerTerm) ||
+                employee.Department.ToLower().Contains(lowerTerm));
         }
 
         var sorted = false;
@@ -102,11 +102,17 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         };
     }
 
-    public async Task<EmployeeResponseDto?> GetByIdAsync(int id)
+    public async Task<EmployeeResponseDto> GetByIdAsync(int id)
     {
-        using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        await using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        await connection.OpenAsync();
+
         var employee = await connection.GetAsync<Employee>(id);
-        return employee == null ? null : MapToResponse(employee);
+
+        if (employee == null)
+            throw new KeyNotFoundException($"Employee with id {id} not found.");
+
+        return MapToResponse(employee);
     }
 
     public async Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee)
@@ -125,11 +131,12 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return MapToResponse(newEmployee);
     }
 
-    public async Task<EmployeeResponseDto?> UpdateAsync(int id, EmployeeDto updatedEmployee)
+    public async Task<EmployeeResponseDto> UpdateAsync(int id, EmployeeDto updatedEmployee)
     {
         var employee = await context.Employees.FindAsync(id);
+
         if (employee == null)
-            return null;
+            throw new KeyNotFoundException($"Employee with id {id} not found.");
 
         employee.Name = updatedEmployee.Name;
         employee.Position = updatedEmployee.Position;
@@ -141,15 +148,14 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return MapToResponse(employee);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         var employee = await context.Employees.FindAsync(id);
+
         if (employee == null)
-            return false;
+            throw new KeyNotFoundException($"Employee with id {id} not found.");
 
         context.Employees.Remove(employee);
         await context.SaveChangesAsync();
-
-        return true;
     }
 }

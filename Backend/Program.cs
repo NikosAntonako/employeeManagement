@@ -40,7 +40,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-app.UseExceptionHandler();
+app.UseMiddleware<Backend.Middleware.LoggingMiddleware>();
+app.UseMiddleware<Backend.Middleware.ExceptionMiddleware>();
+
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();

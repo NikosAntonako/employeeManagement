@@ -35,7 +35,7 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.GetAsync($"employee/Get/{Id}");
+            var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -76,7 +76,7 @@ public partial class EditEmployee : ComponentBase
 
         try
         {
-            var response = await _httpClient.PutAsJsonAsync($"employee/Put/{Id}", employee);
+            var response = await _httpClient.PutAsJsonAsync($"Employee/Update/{Id}", employee);
 
             if (response.IsSuccessStatusCode)
             {

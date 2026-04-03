@@ -107,11 +107,15 @@ public partial class EmployeeList : ComponentBase
 
         try
         {
-            var response = await _httpClient.DeleteAsync($"employee/Delete/{id}");
+            var response = await _httpClient.DeleteAsync($"Employee/Delete/{id}");
 
             if (response.IsSuccessStatusCode)
             {
                 // Re-fetching the list from the backend
+                // If this was the last employee on the page and not on the first page, go to the previous page
+                if (employee != null && employees.Count == 1 && currentPage > 1)
+                    currentPage--;
+
                 await LoadEmployees();
                 successMessage = $"Employee '{employeeName}' with id {id} was deleted successfully.";
             }
@@ -149,7 +153,7 @@ public partial class EmployeeList : ComponentBase
             if (!string.IsNullOrWhiteSpace(SearchTerm))
                 query["searchTerm"] = SearchTerm;
 
-            var url = QueryHelpers.AddQueryString("employee/GetAll", query);
+            var url = QueryHelpers.AddQueryString("Employee/GetAll", query);
 
             var response = await _httpClient.GetAsync(url);
 

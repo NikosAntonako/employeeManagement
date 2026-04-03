@@ -1,7 +1,7 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### POST new employee (success)
-POST {{employeeManagement_HostAddress}}/api/employee/Post
+POST {{employeeManagement_HostAddress}}/api/Employee/Create
 Content-Type: application/json
 Accept: application/json
 

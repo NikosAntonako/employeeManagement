@@ -15,8 +15,12 @@ public class EmployeeContext(DbContextOptions<EmployeeContext> options) : DbCont
     public DbSet<Employee> Employees { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Employee>()
-            .Property(employee => employee.Salary)
-            .HasPrecision(18, 2);
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.Property(employee => employee.Name).HasMaxLength(50);
+            entity.Property(employee => employee.Position).HasMaxLength(50);
+            entity.Property(employee => employee.Department).HasMaxLength(50);
+            entity.Property(employee => employee.Salary).HasPrecision(9, 2);
+        });
     }
 }

@@ -1,7 +1,7 @@
 @employeeManagement_HostAddress = https://localhost:7105
 
 ### GET first 10 employees (default paging)
-GET {{employeeManagement_HostAddress}}/api/employee/GetAll
+GET {{employeeManagement_HostAddress}}/api/Employee/GetAll
 Accept: application/json
 ###
 

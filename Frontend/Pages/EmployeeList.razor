@@ -51,7 +51,7 @@ else
                     <td>@employee.Name</td>
                     <td>@employee.Position</td>
                     <td>@employee.Department</td>
-                    <td>@employee.Salary.ToString("C")</td>
+                    <td>@(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")</td>
                     <td>
                         <!-- Edit Button-->
                         <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => EditEmployee(employee.Id)">Edit</button>
