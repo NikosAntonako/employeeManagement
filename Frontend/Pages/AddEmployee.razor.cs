@@ -15,7 +15,7 @@ public partial class AddEmployee : ComponentBase
     private HttpClient _httpClient = default!;
 
     // 2. Fields and properties
-    private EmployeeInput employee = new();
+    private readonly EmployeeInput employee = new();
 
     // Notification Fields
     private string? successMessage;

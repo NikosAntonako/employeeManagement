@@ -185,9 +185,9 @@ public partial class EmployeeList : ComponentBase
 
     private CancellationTokenSource? _searchCts;
 
-    private async Task OnSearchInput(ChangeEventArgs e)
+    private async Task OnSearchInput(ChangeEventArgs eventData)
     {
-        SearchTerm = e.Value?.ToString() ?? string.Empty;
+        SearchTerm = eventData.Value?.ToString() ?? string.Empty;
         currentPage = 1;
 
         _searchCts?.Cancel();
