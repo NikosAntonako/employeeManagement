@@ -2,6 +2,11 @@
 
 namespace Backend.Services;
 
+/// <summary>
+/// Defines methods for managing employee records, including retrieval, creation, updating, and deletion operations."
+/// </summary>
+/// <remarks>Implementations of this interface should ensure thread safety if used in multi-threaded scenarios.
+/// Methods are asynchronous and may involve database or external service calls.</remarks>
 public interface IEmployeeService
 {
     Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request);
