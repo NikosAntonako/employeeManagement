@@ -1,7 +1,7 @@
 namespace Frontend.Models;
 
-public class PagedResult<T>
+public class PagedResult
 {
-    public IReadOnlyCollection<T> Items { get; set; } = [];
+    public IReadOnlyCollection<EmployeeViewModel> Items { get; set; } = [];
     public int TotalPages { get; set; }
 }

@@ -33,7 +33,7 @@ public class EmployeeController(IEmployeeService service) : ControllerBase
     /// <param name="query">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
     /// <returns>An asynchronous operation that returns an HTTP action result containing a paged list of employee data transfer objects.</returns>
     [HttpGet(template: "GetAll")]
-    public async Task<ActionResult<PagedResultDto<EmployeeResponseDto>>> GetAll([FromQuery] EmployeeQueryDto query)
+    public async Task<ActionResult<PagedResultDto>> GetAll([FromQuery] EmployeeQueryDto query)
     {
         var result = await service.GetAllAsync(query);
         return Ok(result);

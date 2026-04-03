@@ -155,7 +155,7 @@ public partial class EmployeeList : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<PagedResult<EmployeeViewModel>>();
+                var result = await response.Content.ReadFromJsonAsync<PagedResult>();
                 employees = result?.Items.ToList() ?? [];
                 totalPages = result?.TotalPages ?? 1;
                 errorMessage = null;

@@ -4,7 +4,7 @@ namespace Backend.Services;
 
 public interface IEmployeeService
 {
-    Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request);
+    Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request);
     Task<EmployeeResponseDto?> GetByIdAsync(int id);
     Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee);
     Task<EmployeeResponseDto?> UpdateAsync(int id, EmployeeDto updatedEmployee);

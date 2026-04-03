@@ -27,7 +27,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         };
     }
 
-    public async Task<PagedResultDto<EmployeeResponseDto>> GetAllAsync(EmployeeQueryDto request)
+    public async Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = context.Employees.AsNoTracking();
 
@@ -95,7 +95,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
 
         var items = employees.Select(MapToResponse).ToList();
 
-        return new PagedResultDto<EmployeeResponseDto>
+        return new PagedResultDto
         {
             Items = items,
             TotalPages = totalPages
