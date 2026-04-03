@@ -1,7 +1,7 @@
 ﻿using Backend.Data;
 using Backend.Dtos;
 using Backend.Models;
-using Dapper;
+using Dapper.Contrib.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -105,8 +105,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
     public async Task<EmployeeResponseDto?> GetByIdAsync(int id)
     {
         using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
-        const string sql = @"SELECT Id, Name, Position, Department, Salary FROM Employees WHERE Id = @Id";
-        var employee = await connection.QueryFirstOrDefaultAsync<Employee>(sql, new { Id = id });
+        var employee = await connection.GetAsync<Employee>(id);
         return employee == null ? null : MapToResponse(employee);
     }
 
