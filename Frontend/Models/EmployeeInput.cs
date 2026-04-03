@@ -2,6 +2,12 @@
 
 namespace Frontend.Models;
 
+/// <summary>
+/// Represents the input data required to create or update an employee record.
+/// </summary>
+/// <remarks>This class is typically used for data transfer in scenarios such as API requests or form submissions.
+/// All properties are required except for Salary, which must be a positive value within the specified range. Property
+/// values are validated for length and character content to ensure data integrity.</remarks>
 public class EmployeeInput
 {
     [Required(ErrorMessage = "Name is required.")]
