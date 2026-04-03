@@ -3,8 +3,8 @@
 <h3>Edit Employee</h3>
 
 <!-- Notification Area -->
-<Notification Message="@successMessage" AlertType="success" />
-<Notification Message="@errorMessage" AlertType="danger" />
+<Notification @bind-Message="successMessage" AlertType="success" />
+<Notification @bind-Message="errorMessage" AlertType="danger" />
 
 <!-- Loading Indicator -->
 @if (isLoading)
@@ -43,8 +43,4 @@ else if (employee != null)
         <button class="btn btn-primary" type="submit">Edit Employee</button>
         <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
     </EditForm>
-}
-else if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger">@errorMessage</div>
 }

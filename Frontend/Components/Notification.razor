@@ -9,6 +9,7 @@
 
 @code {
     [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
     [Parameter] public string AlertType { get; set; } = "success";
     [Parameter] public int Duration { get; set; } = 5000; // milliseconds
 
@@ -17,6 +18,7 @@
     protected override async Task OnParametersSetAsync()
     {
         cancellationTokenSource?.Cancel();
+        cancellationTokenSource?.Dispose();
         cancellationTokenSource = new CancellationTokenSource();
 
         if (!string.IsNullOrEmpty(Message))
@@ -24,8 +26,7 @@
             try
             {
                 await Task.Delay(Duration, cancellationTokenSource.Token);
-                Message = null;
-                StateHasChanged();
+                await MessageChanged.InvokeAsync(null);
             }
             catch (TaskCanceledException)
             {
@@ -36,5 +37,9 @@
 
     private string GetAlertClass() => $"alert alert-{AlertType}";
 
-    void IDisposable.Dispose() => cancellationTokenSource?.Cancel();
+    void IDisposable.Dispose()
+    {
+        cancellationTokenSource?.Cancel();
+        cancellationTokenSource?.Dispose();
+    }
 }

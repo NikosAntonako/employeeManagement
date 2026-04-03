@@ -1,4 +1,5 @@
 ﻿using Frontend.Models;
+using Frontend.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -57,7 +58,7 @@ public partial class EditEmployee : ComponentBase
             }
             else
             {
-                errorMessage = $"Failed to load employee with id {Id}.";
+                errorMessage = await response.GetErrorMessageAsync($"Failed to load employee with id {Id}.");
             }
         }
         catch (Exception exception)

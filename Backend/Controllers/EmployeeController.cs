@@ -20,7 +20,7 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// <summary>
     /// Retrieves a paged list of employees that match the specified query parameters.
     /// </summary>
-    /// <param name="query">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
+    /// <param name="employeeQuery">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
     /// <returns>An asynchronous operation that returns an HTTP action result containing a paged list of employee data transfer objects.</returns>
     [HttpGet(template: "GetAll")]
     public async Task<ActionResult<PagedResultDto>> GetAll([FromQuery] EmployeeQueryDto employeeQuery)
@@ -34,8 +34,7 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// </summary>
     /// <param name="id">The unique identifier of the employee to retrieve. Must be a positive integer.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an <see
-    /// cref="ActionResult{T}">ActionResult</see> of <see cref="EmployeeResponseDto"/> containing the employee details if found;
-    /// otherwise, an appropriate error response.</returns>
+    /// cref="ActionResult{T}">ActionResult</see> of <see cref="EmployeeResponseDto"/> containing the employee details.</returns>
     [HttpGet(template: "GetById/{id:int}")]
     public async Task<ActionResult<EmployeeResponseDto>> GetById([FromRoute] int id)
     {
@@ -60,8 +59,7 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// </summary>
     /// <param name="id">The unique identifier of the employee to update.</param>
     /// <param name="updatedEmployee">An object containing the updated employee information. Cannot be null.</param>
-    /// <returns>An ActionResult containing the updated employee data if the update is successful;
-    /// otherwise, an appropriate error response.</returns>
+    /// <returns>An ActionResult containing the updated employee data.</returns>
     [HttpPut(template: "Update/{id:int}")]
     public async Task<ActionResult<EmployeeResponseDto>> Update([FromRoute] int id, [FromBody] EmployeeDto updatedEmployee)
     {
@@ -73,8 +71,7 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// Deletes the resource identified by the specified ID.
     /// </summary>
     /// <param name="id">The unique identifier of the resource to delete. Must be a positive integer.</param>
-    /// <returns>An ActionResult that indicates the outcome of the delete operation. Returns a success response if the resource
-    /// was deleted; otherwise, returns an error response.</returns>
+    /// <returns>An ActionResult that indicates the outcome of the delete operation.</returns>
     [HttpDelete(template: "Delete/{id:int}")]
     public async Task<ActionResult> Delete([FromRoute] int id)
     {

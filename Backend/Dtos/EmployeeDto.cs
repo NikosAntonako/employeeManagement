@@ -29,6 +29,6 @@ public sealed class EmployeeDto
     [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Department must contain only letters and spaces.")]
     public required string Department { get; set; }
 
-    [Range(0, 9999999.99, ErrorMessage = "Salary must be between 0 and 9999999,99.")]
+    [Range(0, 9999999.99, ErrorMessage = "Salary must be between 0 and 9,999,999.99.")]
     public decimal? Salary { get; set; }
 }
