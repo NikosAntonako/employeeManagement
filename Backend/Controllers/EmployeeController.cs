@@ -72,10 +72,10 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// </summary>
     /// <param name="id">The unique identifier of the resource to delete. Must be a positive integer.</param>
     /// <returns>A standardized response confirming successful deletion with HTTP 200 OK status.</returns>
-    [HttpDelete(template: "Delete/{id:int}")]
-    public async Task<ActionResult<ApiResponse<bool>>> Delete([FromRoute] int id)
+    [HttpDelete("Delete/{id:int}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete([FromRoute] int id)
     {
         await employeeService.DeleteAsync(id);
-        return Ok(new ApiResponse<bool>(StatusCodes.Status200OK));
+        return Ok(new ApiResponse<object>(StatusCodes.Status200OK, null));
     }
 }

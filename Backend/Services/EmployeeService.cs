@@ -40,12 +40,12 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            var lowerTerm = request.SearchTerm.ToLower();
+            var term = request.SearchTerm;
 
             query = query.Where(employee =>
-                employee.Name.ToLower().Contains(lowerTerm) ||
-                employee.Position.ToLower().Contains(lowerTerm) ||
-                employee.Department.ToLower().Contains(lowerTerm));
+                employee.Name.Contains(term) ||
+                employee.Position.Contains(term) ||
+                employee.Department.Contains(term));
         }
 
         var sorted = false;

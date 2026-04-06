@@ -7,7 +7,7 @@ using System.Net.Http.Json;
 
 namespace Frontend.Pages;
 
-public partial class EmployeeList : ComponentBase
+public partial class EmployeeList : ComponentBase, IDisposable
 {
     // 1.Injections
     [Inject] public IHttpClientFactory HttpClientFactory { get; set; } = default!;
@@ -83,8 +83,6 @@ public partial class EmployeeList : ComponentBase
 
     async Task DeleteEmployee(int id)
     {
-        // Turn Loading on
-        isLoading = true;
         // Clear previous notifications
         successMessage = errorMessage = null;
 
@@ -95,10 +93,10 @@ public partial class EmployeeList : ComponentBase
         bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete employee '{employeeName}' with id {id}?");
 
         if (!confirmed)
-        {
-            isLoading = false;
             return;
-        }
+
+        // Turn Loading on (after confirmation)
+        isLoading = true;
 
         try
         {
@@ -106,8 +104,6 @@ public partial class EmployeeList : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                // Re-fetching the list from the backend
-                // If this was the last employee on the page and not on the first page, go to the previous page
                 if (employee != null && employees?.Count == 1 && currentPage > 1)
                     currentPage--;
 
@@ -126,7 +122,6 @@ public partial class EmployeeList : ComponentBase
         }
         finally
         {
-            // Turn Loading off
             isLoading = false;
         }
     }
@@ -183,19 +178,20 @@ public partial class EmployeeList : ComponentBase
         await LoadEmployees();
     }
 
-    private CancellationTokenSource? _searchCts;
+    private CancellationTokenSource? _searchCancellationTokenSource;
 
     private async Task OnSearchInput(ChangeEventArgs eventData)
     {
         SearchTerm = eventData.Value?.ToString() ?? string.Empty;
         currentPage = 1;
 
-        _searchCts?.Cancel();
-        _searchCts = new();
+        _searchCancellationTokenSource?.Cancel();
+        _searchCancellationTokenSource?.Dispose();
+        _searchCancellationTokenSource = new();
 
         try
         {
-            await Task.Delay(250, _searchCts.Token);
+            await Task.Delay(250, _searchCancellationTokenSource.Token);
             await LoadEmployees();
         }
         catch (OperationCanceledException)
@@ -206,5 +202,12 @@ public partial class EmployeeList : ComponentBase
             errorMessage = $"Search failed: {exception.Message}";
             employees = [];
         }
+    }
+
+    public void Dispose()
+    {
+        _searchCancellationTokenSource?.Cancel();
+        _searchCancellationTokenSource?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

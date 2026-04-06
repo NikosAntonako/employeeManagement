@@ -23,7 +23,7 @@ public class EmployeeInput
     public string Position { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Department is required.")]
-    [MinLength(1, ErrorMessage = "Department  cannot be empty.")]
+    [MinLength(1, ErrorMessage = "Department cannot be empty.")]
     [StringLength(50, ErrorMessage = "Department cannot exceed 50 characters.")]
     [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Department must contain only letters and spaces.")]
     public string Department { get; set; } = string.Empty;

@@ -30,7 +30,7 @@
             }
             catch (TaskCanceledException)
             {
-                Logger.LogWarning("Notification auto-dismiss was cancelled.");
+                // Normal: notification was replaced or dismissed before timeout
             }
         }
     }

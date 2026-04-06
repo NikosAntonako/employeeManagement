@@ -42,26 +42,3 @@ public class ExceptionMiddleware(RequestDelegate next)
     }
 }
 
-/// <summary>
-/// Middleware that logs HTTP request and response information as part of the ASP.NET Core request pipeline.
-/// </summary>
-public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger)
-{
-    private readonly RequestDelegate _next = next;
-    private readonly ILogger<LoggingMiddleware> _logger = logger;
-
-    public async Task InvokeAsync(HttpContext context)
-    {
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Request {Method} {Path}", context.Request.Method, context.Request.Path);
-        }
-
-        await _next(context);
-
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Response {StatusCode}", context.Response.StatusCode);
-        }
-    }
-}
