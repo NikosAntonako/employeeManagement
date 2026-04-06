@@ -39,7 +39,8 @@ public partial class AddEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var createdEmployee = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                var createdEmployee = apiResponse?.Data;
                 successMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' with id: {createdEmployee?.Id} was added successfully.";
             }
             else

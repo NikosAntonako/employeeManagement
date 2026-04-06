@@ -40,7 +40,8 @@ public partial class EditEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var employeeData = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                var employeeData = apiResponse?.Data;
 
                 if (employeeData == null)
                 {
@@ -81,7 +82,8 @@ public partial class EditEmployee : ComponentBase
 
             if (response.IsSuccessStatusCode)
             {
-                var updatedEmployee = await response.Content.ReadFromJsonAsync<EmployeeViewModel>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                var updatedEmployee = apiResponse?.Data;
                 successMessage = $"Employee '{updatedEmployee?.Name ?? employee?.Name}' with id {Id} was updated successfully.";
             }
             else

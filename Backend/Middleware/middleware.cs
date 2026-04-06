@@ -1,7 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Backend.Common;
 
 namespace Backend.Middleware;
 
+/// <summary>
+/// Middleware that handles unhandled exceptions by returning standardized JSON error responses with appropriate HTTP
+/// status codes.
+/// </summary>
+/// <remarks>This middleware maps specific exception types to HTTP status codes: 404 for KeyNotFoundException, 400
+/// for ArgumentException, and 500 for all other exceptions. For 500 errors, the response omits the exception message
+/// for security reasons. Place this middleware early in the pipeline to ensure consistent error handling.</remarks>
+/// <param name="next">The next middleware component in the request processing pipeline.</param>
 public class ExceptionMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
@@ -14,35 +22,29 @@ public class ExceptionMiddleware(RequestDelegate next)
         }
         catch (Exception exception)
         {
-            context.Response.ContentType = "application/problem+json";
+            context.Response.ContentType = "application/json";
 
-            var statusCode = exception switch
+            context.Response.StatusCode = exception switch
             {
                 KeyNotFoundException => StatusCodes.Status404NotFound,
                 ArgumentException => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status500InternalServerError
             };
 
-            context.Response.StatusCode = statusCode;
+            // Pass exception message as detail, or null for 500 errors (security)
+            var detail = context.Response.StatusCode == StatusCodes.Status500InternalServerError
+                ? null
+                : exception.Message;
 
-            var problemDetails = new ProblemDetails
-            {
-                Title = statusCode switch
-                {
-                    StatusCodes.Status404NotFound => "Resource not found.",
-                    StatusCodes.Status400BadRequest => "Bad request.",
-                    _ => "An unexpected error occurred."
-                },
-                Detail = exception.Message,
-                Status = statusCode,
-                Instance = context.Request.Path
-            };
-
-            await context.Response.WriteAsJsonAsync(problemDetails);
+            await context.Response.WriteAsJsonAsync(
+                new ApiResponse<object>(context.Response.StatusCode, detail: detail));
         }
     }
 }
 
+/// <summary>
+/// Middleware that logs HTTP request and response information as part of the ASP.NET Core request pipeline.
+/// </summary>
 public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger)
 {
     private readonly RequestDelegate _next = next;
@@ -50,7 +52,6 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Log request details
         if (_logger.IsEnabled(LogLevel.Information))
         {
             _logger.LogInformation("Request {Method} {Path}", context.Request.Method, context.Request.Path);
@@ -58,7 +59,6 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
 
         await _next(context);
 
-        // Log response details
         if (_logger.IsEnabled(LogLevel.Information))
         {
             _logger.LogInformation("Response {StatusCode}", context.Response.StatusCode);

@@ -1,3 +1,4 @@
+using Backend.Common;
 using Backend.Dtos;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,42 +17,41 @@ namespace Backend.Controllers;
 [Route("api/[Controller]")]
 public class EmployeeController(IEmployeeService employeeService) : ControllerBase
 {
-
     /// <summary>
     /// Retrieves a paged list of employees that match the specified query parameters.
     /// </summary>
     /// <param name="employeeQuery">An object containing filtering, sorting, and paging options to apply to the employee list.</param>
-    /// <returns>An asynchronous operation that returns an HTTP action result containing a paged list of employee data transfer objects.</returns>
+    /// <returns>A standardized response wrapping the paged employee list with HTTP 200 OK status.</returns>
     [HttpGet(template: "GetAll")]
-    public async Task<ActionResult<PagedResultDto>> GetAll([FromQuery] EmployeeQueryDto employeeQuery)
+    public async Task<ActionResult<ApiResponse<PagedResultDto>>> GetAll([FromQuery] EmployeeQueryDto employeeQuery)
     {
         var result = await employeeService.GetAllAsync(employeeQuery);
-        return Ok(result);
+        return Ok(new ApiResponse<PagedResultDto>(StatusCodes.Status200OK, result));
     }
 
     /// <summary>
     /// Retrieves the employee details for the specified identifier.
     /// </summary>
     /// <param name="id">The unique identifier of the employee to retrieve. Must be a positive integer.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains an <see
-    /// cref="ActionResult{T}">ActionResult</see> of <see cref="EmployeeResponseDto"/> containing the employee details.</returns>
+    /// <returns>A standardized response wrapping the matched employee with HTTP 200 OK status.</returns>
     [HttpGet(template: "GetById/{id:int}")]
-    public async Task<ActionResult<EmployeeResponseDto>> GetById([FromRoute] int id)
+    public async Task<ActionResult<ApiResponse<EmployeeResponseDto>>> GetById([FromRoute] int id)
     {
         var result = await employeeService.GetByIdAsync(id);
-        return Ok(result);
+        return Ok(new ApiResponse<EmployeeResponseDto>(StatusCodes.Status200OK, result));
     }
 
     /// <summary>
     /// Creates a new employee record using the provided employee data.
     /// </summary>
     /// <param name="employee">The employee data to create. Must not be null.</param>
-    /// <returns>An asynchronous operation that returns an ActionResult containing the created employee information.</returns>
+    /// <returns>A standardized 201 Created response wrapping the newly created employee.</returns>
     [HttpPost(template: "Create")]
-    public async Task<ActionResult<EmployeeResponseDto>> Create([FromBody] EmployeeDto employee)
+    public async Task<ActionResult<ApiResponse<EmployeeResponseDto>>> Create([FromBody] EmployeeDto employee)
     {
         var result = await employeeService.CreateAsync(employee);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        var response = new ApiResponse<EmployeeResponseDto>(StatusCodes.Status201Created, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, response);
     }
 
     /// <summary>
@@ -59,23 +59,23 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     /// </summary>
     /// <param name="id">The unique identifier of the employee to update.</param>
     /// <param name="updatedEmployee">An object containing the updated employee information. Cannot be null.</param>
-    /// <returns>An ActionResult containing the updated employee data.</returns>
+    /// <returns>A standardized response wrapping the updated employee with HTTP 200 OK status.</returns>
     [HttpPut(template: "Update/{id:int}")]
-    public async Task<ActionResult<EmployeeResponseDto>> Update([FromRoute] int id, [FromBody] EmployeeDto updatedEmployee)
+    public async Task<ActionResult<ApiResponse<EmployeeResponseDto>>> Update([FromRoute] int id, [FromBody] EmployeeDto updatedEmployee)
     {
         var result = await employeeService.UpdateAsync(id, updatedEmployee);
-        return Ok(result);
+        return Ok(new ApiResponse<EmployeeResponseDto>(StatusCodes.Status200OK, result));
     }
 
     /// <summary>
     /// Deletes the resource identified by the specified ID.
     /// </summary>
     /// <param name="id">The unique identifier of the resource to delete. Must be a positive integer.</param>
-    /// <returns>An ActionResult that indicates the outcome of the delete operation.</returns>
+    /// <returns>A standardized response confirming successful deletion with HTTP 200 OK status.</returns>
     [HttpDelete(template: "Delete/{id:int}")]
-    public async Task<ActionResult> Delete([FromRoute] int id)
+    public async Task<ActionResult<ApiResponse<object>>> Delete([FromRoute] int id)
     {
         await employeeService.DeleteAsync(id);
-        return NoContent();
+        return Ok(new ApiResponse<object>(StatusCodes.Status200OK));
     }
 }
