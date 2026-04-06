@@ -9,6 +9,11 @@ namespace Backend.Services;
 /// Methods are asynchronous and may involve database or external service calls.</remarks>
 public interface IEmployeeService
 {
+    /// <summary>
+    /// retrieeves all employees
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request);
     Task<EmployeeResponseDto> GetByIdAsync(int id);
     Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee);

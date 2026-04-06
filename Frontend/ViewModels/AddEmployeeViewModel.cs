@@ -4,29 +4,38 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 
-namespace Frontend.Pages;
+namespace Frontend.ViewModels;
 
-public partial class AddEmployee : ComponentBase
+public class AddEmployeeViewModel : BaseViewModel
 {
-    // 1.Injections
-    [Inject] public IHttpClientFactory HttpClientFactory { get; set; } = default!;
-    [Inject] public NavigationManager Navigation { get; set; } = default!;
-    [Inject] public IJSRuntime JS { get; set; } = default!;
+    public AddEmployeeViewModel(ComponentBase component, IHttpClientFactory cf, NavigationManager nav, IJSRuntime js)
+    {
+        _component = component;
+        HttpClientFactory = cf;
+        Navigation = nav;
+        JS = js;
+        _httpClient = HttpClientFactory.CreateClient("BackendApi");
+        PageTitle = "Add New Employee";
 
-    private HttpClient _httpClient = default!;
+        // initialize
+        Initialized = true;
+        //component.StateHasChanged();
+    }
+
+    public HttpClient _httpClient = default!;
 
     // 2. Fields and properties
-    private readonly EmployeeInput employee = new();
+    public readonly EmployeeInput employee = new();
 
     // Notification Fields
-    private string? successMessage;
-    private string? errorMessage;
+    public string? successMessage;
+    public string? errorMessage;
 
     // Loading indicator true = on, false = off
-    private bool isLoading = false;
+    public bool isLoading = false;
 
     // 3. Event handlers and public methods
-    private async Task HandleValidSubmit()
+    public async Task HandleValidSubmit()
     {
         // Turn Loading on
         isLoading = true;
@@ -60,14 +69,9 @@ public partial class AddEmployee : ComponentBase
         }
     }
 
-    void GoBack()
+    public void GoBack()
     {
         Navigation.NavigateTo("/");
     }
 
-    // 4. Life cycle methods
-    protected override void OnInitialized()
-    {
-        _httpClient = HttpClientFactory.CreateClient("BackendApi");
-    }
 }

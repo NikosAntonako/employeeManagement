@@ -27,6 +27,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         };
     }
 
+    /// </inheritdoc>
     public async Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = context.Employees.AsNoTracking();
