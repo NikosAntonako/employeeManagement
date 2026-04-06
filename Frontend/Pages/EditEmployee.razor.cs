@@ -88,7 +88,7 @@ public partial class EditEmployee : ComponentBase
             }
             else
             {
-                errorMessage = $"Failed to update employee with id {Id}.";
+                errorMessage = await response.GetErrorMessageAsync($"Failed to update employee with id {Id}.");
             }
         }
         catch (Exception exception)

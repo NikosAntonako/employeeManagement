@@ -1,3 +1,4 @@
+using Frontend.Models;
 using System.Net.Http.Json;
 
 namespace Frontend.Utilities;
@@ -26,12 +27,5 @@ public static class HttpResponseMessageExtensions
         {
             return fallbackMessage;
         }
-    }
-
-    private sealed class ApiProblemDetails
-    {
-        public string? Title { get; set; }
-        public string? Detail { get; set; }
-        public Dictionary<string, string[]>? Errors { get; set; }
     }
 }

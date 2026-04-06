@@ -26,6 +26,7 @@ public partial class EmployeeList : ComponentBase
         get => _searchTerm;
         set
         {
+            // Avoid re-renders until value changes
             if (_searchTerm != value)
                 _searchTerm = value;
         }
@@ -43,10 +44,7 @@ public partial class EmployeeList : ComponentBase
     // Loading indicator true = on, false = off
     private bool isLoading = false;
 
-    // 3. Parameters (if any)
-    // [Parameter] public int SomeParameter { get; set; }
-
-    // 4. Lifecycle methods
+    // 3. Lifecycle methods
     protected override async Task OnInitializedAsync()
     {
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
@@ -72,7 +70,7 @@ public partial class EmployeeList : ComponentBase
         }
     }
 
-    // 5. Event handlers and public methods
+    // 4. Event handlers and public methods
     void AddEmployee()
     {
         Navigation.NavigateTo("/add");
@@ -87,7 +85,7 @@ public partial class EmployeeList : ComponentBase
     {
         // Turn Loading on
         isLoading = true;
-        // Clear previous notification
+        // Clear previous notifications
         successMessage = errorMessage = null;
 
         var employee = employees?.FirstOrDefault(employee => employee.Id == id);
@@ -110,7 +108,7 @@ public partial class EmployeeList : ComponentBase
             {
                 // Re-fetching the list from the backend
                 // If this was the last employee on the page and not on the first page, go to the previous page
-                if (employee != null && employees.Count == 1 && currentPage > 1)
+                if (employee != null && employees?.Count == 1 && currentPage > 1)
                     currentPage--;
 
                 await LoadEmployees();
@@ -118,7 +116,7 @@ public partial class EmployeeList : ComponentBase
             }
             else
             {
-                errorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}. Maybe it was already deleted.");
+                errorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}.");
             }
         }
         catch (Exception exception)
@@ -133,7 +131,7 @@ public partial class EmployeeList : ComponentBase
         }
     }
 
-    // 6. Private helper methods
+    // 5. Private helper methods
     // Load Results using Pagination settings
     private async Task LoadEmployees()
     {
