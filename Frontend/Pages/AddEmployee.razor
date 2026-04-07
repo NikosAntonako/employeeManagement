@@ -1,19 +1,16 @@
 ﻿@page "/add"
-@using Frontend.ViewModels
 
-
-
-<!-- Notification Area -->
 @if (_viewModel != null && _viewModel.Initialized)
 {
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Add Employee</h3>
 
+    <!-- Notification Area -->
     <Notification @bind-Message="_viewModel.successMessage" AlertType="success" />
     <Notification @bind-Message="_viewModel.errorMessage" AlertType="danger" />
 
     <!-- Employee Form -->
-    <EditForm Model="_viewModel.employee" OnValidSubmit="_viewModel.HandleValidSubmit">
+    <EditForm EditContext="_editContext" OnValidSubmit="_viewModel.HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -37,28 +34,54 @@
             <InputNumber class="form-control" @bind-Value="_viewModel.employee.Salary" />
             <ValidationMessage For="@(() => _viewModel.employee.Salary)" />
         </div>
-        <button class="btn btn-primary" type="submit">Add Employee</button>
-        <button class="btn btn-secondary ms-2" type="button" @onclick="_viewModel.GoBack">Cancel</button>
+        <button class="btn btn-primary" type="submit" disabled="@(!_isFormValid)">Add Employee</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="_viewModel.GoBack">Go Back</button>
+        <button class="btn btn-warning ms-2" type="button" @onclick="ResetForm">Reset</button>
     </EditForm>
-    
 
 }
 else
 {
+    <!-- Loading Indicator -->
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
 }
 
-@code{
+@code {
     AddEmployeeViewModel? _viewModel;
-
+    EditContext? _editContext;
+    bool _isFormValid = false;
+    bool _needsValidation = false ;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
+        if (firstRender)
+        {
+            _viewModel = new AddEmployeeViewModel(this, client, navigationManager, JSRuntime);
+            _editContext = new EditContext(_viewModel.employee);
+            _editContext.OnFieldChanged += (_, __) => ValidateForm();
+            _needsValidation = true;
+            StateHasChanged();
+        }
+        else if (_needsValidation)
+        {
+            _needsValidation = false;
+            ValidateForm();
+        }
+    }
 
-        _viewModel = new AddEmployeeViewModel(this, client, navigationManager, JSRuntime);
+    private void ValidateForm()
+    {
+        if (_editContext != null)
+            _isFormValid = _editContext.Validate();
+        StateHasChanged();
+    }
+
+    private void ResetForm()
+    {
+        _viewModel?.ResetForm();
+        _editContext?.Validate();
         StateHasChanged();
     }
 }

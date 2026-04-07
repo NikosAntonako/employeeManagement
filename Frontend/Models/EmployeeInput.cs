@@ -30,4 +30,15 @@ public class EmployeeInput
 
     [Range(0, 9999999.99, ErrorMessage = "Salary must be between 0 and 9,999,999.99.")]
     public decimal? Salary { get; set; }
+
+    public EmployeeInput Clone()
+    {
+        return new EmployeeInput
+        {
+            Name = this.Name,
+            Position = this.Position,
+            Department = this.Department,
+            Salary = this.Salary
+        };
+    }
 }

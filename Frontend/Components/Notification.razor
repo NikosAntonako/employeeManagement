@@ -8,35 +8,49 @@
 }
 
 @code {
+    // The message to display in the notification
     [Parameter] public string? Message { get; set; }
-    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
-    [Parameter] public string AlertType { get; set; } = "success";
-    [Parameter] public int Duration { get; set; } = 5000; // milliseconds
 
+    // Event callback to notify parent when the message changes (e.g., dismissed)
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
+
+    // The type of alert (e.g., "success", "danger", "warning")
+    [Parameter] public string AlertType { get; set; } = "success";
+
+    // Duration to show the notification (in milliseconds)
+    [Parameter] public int Duration { get; set; } = 5000;
+
+    // Used to cancel the auto-dismiss timer if the notification changes
     private CancellationTokenSource? cancellationTokenSource;
 
+    // Called when parameters are set or updated
     protected override async Task OnParametersSetAsync()
     {
+        // Cancel and dispose any previous timer
         cancellationTokenSource?.Cancel();
         cancellationTokenSource?.Dispose();
         cancellationTokenSource = new CancellationTokenSource();
 
+        // If there is a message, start the auto-dismiss timer
         if (!string.IsNullOrEmpty(Message))
         {
             try
             {
                 await Task.Delay(Duration, cancellationTokenSource.Token);
+                // Notify parent to clear the message after the duration
                 await MessageChanged.InvokeAsync(null);
             }
             catch (TaskCanceledException)
             {
-                // Normal: notification was replaced or dismissed before timeout
+                // Notification was replaced or dismissed before timeout
             }
         }
     }
 
+    // Returns the CSS class for the alert based on AlertType
     private string GetAlertClass() => $"alert-{AlertType}";
 
+    // Dispose pattern to clean up the cancellation token
     void IDisposable.Dispose()
     {
         cancellationTokenSource?.Cancel();

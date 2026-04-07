@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 
 namespace Frontend.Utilities;
 
+/// <summary>
+/// Provides extension methods for working with instances of the HttpResponseMessage class.
+/// </summary>
 public static class HttpResponseMessageExtensions
 {
     public static async Task<string> GetErrorMessageAsync(this HttpResponseMessage response, string fallbackMessage)

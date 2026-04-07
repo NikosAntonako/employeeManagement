@@ -1,72 +1,113 @@
 ﻿@page "/"
-@using Frontend.Components
-@using Frontend.Models
 
-<h3>Employee List</h3>
-
-<!-- Notification Area -->
-<Notification @bind-Message="successMessage" AlertType="success"/>
-<Notification @bind-Message="errorMessage" AlertType="danger"/>
-
-<!-- Filter Form -->
-<div class="mb-3">
-    <input class="form-control"
-           placeholder="Search by Name, Position or Department"
-           value="@SearchTerm"
-           @oninput="OnSearchInput" />
-</div>
-
-<button class="btn btn-primary mb-3" @onclick="AddEmployee">Add New Employee</button>
-
-<!-- Loading Indicator -->
-@if (isLoading)
+@if (_viewModel != null && _viewModel.Initialized)
 {
+    <PageTitle>@_viewModel.PageTitle</PageTitle>
+    <h3>Employee List</h3>
+
+    <!-- Notification Area -->
+    <Notification @bind-Message="_viewModel.SuccessMessage" AlertType="success"/>
+    <Notification @bind-Message="_viewModel.ErrorMessage" AlertType="danger"/>
+
+    <!-- Filter Form -->
+    <div class="mb-3">
+        <input class="form-control"
+               placeholder="Search by Name, Position or Department"
+               value="@_viewModel.SearchTerm"
+               @oninput="_viewModel.OnSearchInput" />
+    </div>
+
+    <!-- Page Size Selector -->
+    <div class="mb-3">
+        <label for="pageSizeSelect">Page Size:</label>
+        <select id="pageSizeSelect" class="form-select d-inline w-auto ms-2"
+                @onchange="OnPageSizeChanged"
+                value="@_viewModel.PageSize">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary mb-3" @onclick="_viewModel.AddEmployee">Add New Employee</button>
+
+    @if (!(_viewModel.Employees?.Any() ?? false))
+    {
+        <p>No employees found.</p>
+    }
+    else
+    {
+        <!-- Employee Values -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Department</th>
+                    <th>Salary</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var employee in _viewModel.Employees ?? Enumerable.Empty<EmployeeViewModel>())
+                {
+                    <tr>
+                        <td>@employee.Id</td>
+                        <td>@employee.Name</td>
+                        <td>@employee.Position</td>
+                        <td>@employee.Department</td>
+                        <td>@(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")</td>
+                        <td>
+                            <!-- Edit Button-->
+                            <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => 
+                                _viewModel.EditEmployee(employee.Id)">Edit</button>
+                            <!-- Delete Button-->
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => 
+                                _viewModel.DeleteEmployee(employee.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination UI-->
+        <div>
+            <button @onclick="() => _viewModel.GoToPage(_viewModel.CurrentPage - 1)" 
+                disabled="@((_viewModel.CurrentPage == 1))">Previous</button>
+            <span>Page @_viewModel.CurrentPage of @_viewModel.TotalPages</span>
+            <button @onclick="() => _viewModel.GoToPage(_viewModel.CurrentPage + 1)" 
+                disabled="@((_viewModel.CurrentPage == _viewModel.TotalPages))">Next</button>
+        </div>
+    }
+}
+else
+{
+    <!-- Loading Indicator -->
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
 }
-else if (!(employees?.Any() ?? false))
-{
-    <p>No employees found.</p>
-}
-else
-{
-    <!-- Table Of Employee Values -->
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Department</th>
-                <th>Salary</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var employee in employees ?? Enumerable.Empty<EmployeeViewModel>())
-            {
-                <tr>
-                    <td>@employee.Id</td>
-                    <td>@employee.Name</td>
-                    <td>@employee.Position</td>
-                    <td>@employee.Department</td>
-                    <td>@(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")</td>
-                    <td>
-                        <!-- Edit Button-->
-                        <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => EditEmployee(employee.Id)">Edit</button>
-                        <!-- Delete Button-->
-                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteEmployee(employee.Id)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 
-    <!-- Pagination UI-->
-    <div>
-        <button @onclick="() => GoToPage(currentPage - 1)" disabled="@((currentPage == 1))">Previous</button>
-        <span>Page @currentPage of @totalPages</span>
-        <button @onclick="() => GoToPage(currentPage + 1)" disabled="@((currentPage == totalPages))">Next</button>
-    </div>
+@code {
+    EmployeeListViewModel? _viewModel;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _viewModel = new EmployeeListViewModel(this, client, navigationManager, JSRuntime);
+        await _viewModel.InitializeAsync(navigationManager.Uri); 
+        StateHasChanged();
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (_viewModel != null && int.TryParse(e.Value?.ToString(), out int newSize))
+        {
+            await _viewModel.SetPageSizeAsync(newSize);
+            StateHasChanged();
+        }
+    }
 }
