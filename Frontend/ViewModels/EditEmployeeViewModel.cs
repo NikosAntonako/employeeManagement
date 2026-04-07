@@ -105,6 +105,7 @@ public class EditEmployeeViewModel : BaseViewModel
                 var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
                 var updatedEmployee = apiResponse?.Data;
                 SuccessMessage = $"Employee '{updatedEmployee?.Name ?? OriginalEmployee?.Name}' with id {Id} was updated successfully.";
+                Navigation.NavigateTo($"/?success={Uri.EscapeDataString(SuccessMessage)}");
             }
             else
             {

@@ -39,8 +39,8 @@ public class AddEmployeeViewModel : BaseViewModel
     public readonly EmployeeInput employee = new();
 
     // Notification Fields
-    public string? successMessage;
-    public string? errorMessage;
+    public string? SuccessMessage { get; set; }
+    public string? ErrorMessage { get; set; }
 
     // Loading indicator true = on, false = off
     public bool isLoading = false;
@@ -51,7 +51,7 @@ public class AddEmployeeViewModel : BaseViewModel
         // Turn Loading on
         isLoading = true;
         // Clear previous error
-        successMessage = errorMessage = null;
+        SuccessMessage = ErrorMessage = null;
 
         try
         {
@@ -61,18 +61,19 @@ public class AddEmployeeViewModel : BaseViewModel
             {
                 var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
                 var createdEmployee = apiResponse?.Data;
-                successMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' " +
-                    $"with id: {createdEmployee?.Id} was added successfully.";
+                SuccessMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' " +
+                    $"with id {createdEmployee?.Id} was added successfully.";
+                Navigation.NavigateTo($"/?success={Uri.EscapeDataString(SuccessMessage)}");
             }
             else
             {
-                errorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{employee.Name}'. " +
+                ErrorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{employee.Name}'. " +
                     $"Please check your input and try again.");
             }
         }
         catch (Exception exception)
         {
-            errorMessage = $"Error adding '{employee.Name}': {exception.Message}";
+            ErrorMessage = $"Error adding '{employee.Name}': {exception.Message}";
             Console.Error.WriteLine($"Error adding '{employee.Name}': {exception.Message}");
         }
         finally

@@ -1,4 +1,5 @@
 ﻿@page "/edit/{Id:int}"
+@using Frontend.Components
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
@@ -6,7 +7,6 @@
     <h3>Edit Employee</h3>
 
     <!-- Notification Area -->
-    <Notification @bind-Message="_viewModel.SuccessMessage" AlertType="success" />
     <Notification @bind-Message="_viewModel.ErrorMessage" AlertType="danger" />
 
     @if (_viewModel.Employee != null)
@@ -18,22 +18,22 @@
 
             <div class="mb-3">
                 <label>Name</label>
-                <InputText class="form-control" @bind-Value="_viewModel.Employee.Name" />
+                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Name" />
                 <ValidationMessage For="@(() => _viewModel.Employee.Name)" />
             </div>
             <div class="mb-3">
                 <label>Position</label>
-                <InputText class="form-control" @bind-Value="_viewModel.Employee.Position" />
+                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Position" />
                 <ValidationMessage For="@(() => _viewModel.Employee.Position)" />
             </div>
             <div class="mb-3">
                 <label>Department</label>
-                <InputText class="form-control" @bind-Value="_viewModel.Employee.Department" />
+                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Department" />
                 <ValidationMessage For="@(() => _viewModel.Employee.Department)" />
             </div>
             <div class="mb-3">
                 <label>Salary</label>
-                <InputNumber class="form-control" @bind-Value="_viewModel.Employee.Salary" />
+                <ImmediateInputNumber class="form-control" @bind-Value="_viewModel.Employee.Salary" />
                 <ValidationMessage For="@(() => _viewModel.Employee.Salary)" />
             </div>
             <button class="btn btn-primary" type="submit" disabled="@(!_isFormValid)">Edit Employee</button>
