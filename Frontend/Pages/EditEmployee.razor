@@ -1,54 +1,82 @@
 ﻿@page "/edit/{Id:int}"
-@using Frontend.Components
+@inject Microsoft.Extensions.Logging.ILogger<EditEmployeeViewModel> editEmployeeLogger
+@inject IToastNotificationService ToastService
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Edit Employee</h3>
 
-    <!-- Notification Area -->
-    <Notification @bind-Message="_viewModel.ErrorMessage" AlertType="danger" />
-
     @if (_viewModel.Employee != null)
     {
-        <!-- Employee Form -->
-        <EditForm EditContext="_editContext" OnValidSubmit="_viewModel.HandleValidSubmit">
+        <EditForm EditContext="_editContext" OnValidSubmit="_viewModel.HandleValidSubmit" Context="editFormContext">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <div class="mb-3">
-                <label>Name</label>
-                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Name" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Name)" />
-            </div>
-            <div class="mb-3">
-                <label>Position</label>
-                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Position" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Position)" />
-            </div>
-            <div class="mb-3">
-                <label>Department</label>
-                <ImmediateInputText class="form-control" @bind-Value="_viewModel.Employee.Department" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Department)" />
-            </div>
-            <div class="mb-3">
-                <label>Salary</label>
-                <ImmediateInputNumber class="form-control" @bind-Value="_viewModel.Employee.Salary" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Salary)" />
-            </div>
-            <button class="btn btn-primary" type="submit" disabled="@(!_isFormValid)">Edit Employee</button>
-            <button class="btn btn-secondary ms-2" type="button" @onclick="_viewModel.GoBack">Go Back</button>
-            <button class="btn btn-warning ms-2" type="button" @onclick="ResetForm">Reset</button>
+            <DxFormLayout CaptionPosition="@CaptionPosition.Vertical">
+                <DxFormLayoutItem Caption="Name">
+                    <DxTextBox @bind-Text="_viewModel.Employee.Name"
+                               BindValueMode="@BindValueMode.OnDelayedInput"
+                               NullText="Enter employee name" />
+                    <ValidationMessage For="@(() => _viewModel.Employee!.Name)" />
+                </DxFormLayoutItem>
+
+                <DxFormLayoutItem Caption="Position">
+                    <DxTextBox @bind-Text="_viewModel.Employee.Position"
+                               BindValueMode="@BindValueMode.OnDelayedInput"
+                               NullText="Enter employee position" />
+                    <ValidationMessage For="@(() => _viewModel.Employee!.Position)" />
+                </DxFormLayoutItem>
+
+                <DxFormLayoutItem Caption="Department">
+                    <DxComboBox TData="string"
+                                TValue="string"
+                                Data="@_viewModel.Departments"
+                                @bind-Value="_viewModel.Employee.Department"
+                                BindValueMode="@BindValueMode.OnDelayedInput"
+                                AllowUserInput="true"
+                                NullText="Select or enter a department"
+                                ClearButtonDisplayMode="@DataEditorClearButtonDisplayMode.Auto" />
+                    <ValidationMessage For="@(() => _viewModel.Employee!.Department)" />
+                </DxFormLayoutItem>
+
+                <DxFormLayoutItem Caption="Salary">
+                    <DxSpinEdit @bind-Value="_viewModel.Employee.Salary"
+                                BindValueMode="@BindValueMode.OnDelayedInput"
+                                NullText="Enter salary"
+                                MinValue="0m"
+                                Increment="100m" />
+                    <ValidationMessage For="@(() => _viewModel.Employee!.Salary)" />
+                </DxFormLayoutItem>
+
+                <DxFormLayoutItem ColSpanMd="12">
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <DxButton Text="Edit Employee"
+                                  RenderStyle="@ButtonRenderStyle.Primary"
+                                  Enabled="@_isFormValid"
+                                  SubmitFormOnClick="true" />
+
+                        <DxButton Text="Go Back"
+                                  RenderStyle="@ButtonRenderStyle.Secondary"
+                                  Click="_viewModel.GoBack" />
+
+                        <DxButton Text="Reset"
+                                  RenderStyle="@ButtonRenderStyle.Warning"
+                                  Click="ResetForm" />
+                    </div>
+                </DxFormLayoutItem>
+            </DxFormLayout>
         </EditForm>
     }
     else
     {
-        <p>Employee doesn't exist.</p>
+        <p>@(!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage)
+            ? "Employee details are temporarily unavailable."
+            : "Employee doesn't exist.")</p>
     }
 }
 else
 {
-    <!-- Loading Indicator -->
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
@@ -58,50 +86,64 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    EditEmployeeViewModel? _viewModel;
-    EditContext? _editContext;
-    bool _isFormValid = false;
-    bool _needsValidation = false;
+    private EditEmployeeViewModel? _viewModel;
+    private EditContext? _editContext;
+    private bool _isFormValid;
+    private bool _needsValidation;
+    private string? _lastToastMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _viewModel = new EditEmployeeViewModel(this, client, navigationManager, JSRuntime, editEmployeeLogger, Id);
+        await _viewModel.InitializeAsync();
+
+        if (_viewModel.Employee != null)
+        {
+            _editContext = new EditContext(_viewModel.Employee);
+            _editContext.OnFieldChanged += (_, __) => ValidateForm();
+            _needsValidation = true;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            _viewModel = new EditEmployeeViewModel(this, client, navigationManager, JSRuntime, Id);
-            await _viewModel.InitializeAsync();
-
-            if (_viewModel.Employee != null)
-            {
-                _editContext = new EditContext(_viewModel.Employee);
-                _editContext.OnFieldChanged += (_, __) => ValidateForm();
-                _needsValidation = true;
-            }
-            StateHasChanged();
-        }
-        else if (_needsValidation)
+        if (firstRender && _needsValidation)
         {
             _needsValidation = false;
             ValidateForm();
         }
+
+        if (_viewModel is null || string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
+            return;
+
+        if (_lastToastMessage == _viewModel.ErrorMessage)
+            return;
+
+        _lastToastMessage = _viewModel.ErrorMessage;
+
+        ToastService.ShowToast(new ToastOptions
+        {
+            Title = "Error",
+            Text = _viewModel.ErrorMessage,
+            RenderStyle = ToastRenderStyle.Danger,
+            ThemeMode = ToastThemeMode.Pastel
+        });
+
+        _viewModel.ErrorMessage = null;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void ValidateForm()
     {
-        if (_editContext != null)
+        if (_editContext is not null)
             _isFormValid = _editContext.Validate();
+
         StateHasChanged();
     }
 
     private void ResetForm()
     {
-        if (_viewModel?.Employee != null && _viewModel?.OriginalEmployee != null)
-        {
-            // Copy properties 
-            _viewModel.Employee.Name = _viewModel.OriginalEmployee.Name;
-            _viewModel.Employee.Position = _viewModel.OriginalEmployee.Position;
-            _viewModel.Employee.Department = _viewModel.OriginalEmployee.Department;
-            _viewModel.Employee.Salary = _viewModel.OriginalEmployee.Salary;
-        }
+        _viewModel?.ResetForm();
         _editContext?.Validate();
         StateHasChanged();
     }

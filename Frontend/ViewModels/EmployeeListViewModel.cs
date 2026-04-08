@@ -21,12 +21,14 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         ComponentBase component,
         IHttpClientFactory httpClientFactory,
         NavigationManager navigation,
-        IJSRuntime js)
+        IJSRuntime js,
+        ILogger<EmployeeListViewModel> logger)
     {
         _component = component;
         HttpClientFactory = httpClientFactory;
         Navigation = navigation;
         JS = js;
+        Logger = logger;
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
         PageTitle = "Employee List";
 
@@ -115,22 +117,82 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                     CurrentPage--;
 
                 await LoadEmployees();
-                SuccessMessage = $"Employee '{employeeName}' with id {id} was deleted successfully.";
+                SuccessMessage = $"Employee '{employeeName}' was deleted successfully.";
             }
             else
             {
-                ErrorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}.");
+                ErrorMessage = await response.GetErrorMessageAsync(
+                    $"We couldn't delete employee '{employeeName}'. Please try again.");
             }
         }
         catch (HttpRequestException exception)
         {
-            ErrorMessage = $"Unable to connect to the server. Could not delete '{employeeName}'.";
-            Console.Error.WriteLine($"API connection error deleting '{employeeName}': {exception.Message}");
+            ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
+            Logger.LogWarning(exception, "HTTP request failed while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
         }
         catch (Exception exception)
         {
-            ErrorMessage = $"Something went wrong while deleting '{employeeName}'. Please try again.";
-            Console.Error.WriteLine($"Error deleting '{employeeName}' with id {id}: {exception.Message}");
+            if (IsConnectivityError(exception))
+            {
+                ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
+                Logger.LogWarning(exception, "Connectivity issue while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
+            }
+            else
+            {
+                ErrorMessage = $"Something went wrong while deleting employee '{employeeName}'. Please try again.";
+                Logger.LogError(exception, "Unexpected error while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public async Task DeleteEmployeeConfirmedAsync(int id)
+    {
+        SuccessMessage = ErrorMessage = null;
+
+        var employee = Employees?.FirstOrDefault(employee => employee.Id == id);
+        string employeeName = employee?.Name ?? $"ID {id}";
+
+        IsLoading = true;
+
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"Employee/Delete/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                if (employee != null && Employees?.Count == 1 && CurrentPage > 1)
+                    CurrentPage--;
+
+                await LoadEmployees();
+                SuccessMessage = $"Employee '{employeeName}' was deleted successfully.";
+            }
+            else
+            {
+                ErrorMessage = await response.GetErrorMessageAsync(
+                    $"We couldn't delete employee '{employeeName}'. Please try again.");
+            }
+        }
+        catch (HttpRequestException exception)
+        {
+            ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
+            Logger.LogWarning(exception, "HTTP request failed while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
+        }
+        catch (Exception exception)
+        {
+            if (IsConnectivityError(exception))
+            {
+                ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
+                Logger.LogWarning(exception, "Connectivity issue while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
+            }
+            else
+            {
+                ErrorMessage = $"Something went wrong while deleting employee '{employeeName}'. Please try again.";
+                Logger.LogError(exception, "Unexpected error while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
+            }
         }
         finally
         {
@@ -170,22 +232,30 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             {
                 Employees = [];
                 TotalPages = 1;
-                ErrorMessage = await response.GetErrorMessageAsync("Failed to load employees.");
+                ErrorMessage = await response.GetErrorMessageAsync("We couldn't load the employee list.");
             }
         }
         catch (HttpRequestException exception)
         {
             Employees = [];
             TotalPages = 1;
-            ErrorMessage = "Unable to connect to the server. Please try again later.";
-            Console.Error.WriteLine("API connection error: " + exception.Message);
+            ErrorMessage = "We couldn't load the employee list right now. Please try again later.";
+            Logger.LogWarning(exception, "HTTP request failed while loading employees");
         }
         catch (Exception exception)
         {
             Employees = [];
             TotalPages = 1;
-            ErrorMessage = "Something went wrong while loading employees. Please try again.";
-            Console.Error.WriteLine("General error: " + exception.Message);
+            if (IsConnectivityError(exception))
+            {
+                ErrorMessage = "We couldn't load the employee list right now. Please try again later.";
+                Logger.LogWarning(exception, "Connectivity issue while loading employees");
+            }
+            else
+            {
+                ErrorMessage = "Something went wrong while loading the employee list. Please try again.";
+                Logger.LogError(exception, "Unexpected error while loading employees");
+            }
         }
         finally
         {
@@ -223,11 +293,20 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         }
         catch (Exception exception)
         {
-            ErrorMessage = "Something went wrong while searching. Please try again.";
-            Console.Error.WriteLine($"Search error: {exception.Message}");
+            if (IsConnectivityError(exception))
+            {
+                ErrorMessage = "We couldn't search the employee list right now. Please try again later.";
+                Logger.LogWarning(exception, "Connectivity issue while searching employees. SearchTerm: {SearchTerm}", SearchTerm);
+            }
+            else
+            {
+                ErrorMessage = "Something went wrong while searching. Please try again.";
+                Logger.LogError(exception, "Unexpected error while searching employees. SearchTerm: {SearchTerm}", SearchTerm);
+            }
             Employees = [];
         }
     }
+
     public async Task SetPageSizeAsync(int newSize)
     {
         if (PageSize != newSize)
@@ -242,6 +321,5 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     {
         _searchCancellationTokenSource?.Cancel();
         _searchCancellationTokenSource?.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

@@ -16,9 +16,18 @@ namespace Frontend.ViewModels
         protected IHttpClientFactory HttpClientFactory { get; set; } = default!;
         protected NavigationManager Navigation { get; set; } = default!;
         protected IJSRuntime JS { get; set; } = default!;
+        protected ILogger Logger { get; set; } = default!;
 
         public bool Initialized { get; set; }
         public string? PageTitle { get; set; }
         public bool IsDevice { get; set; } = false;
+
+        protected static bool IsConnectivityError(Exception exception)
+        {
+            if (exception is HttpRequestException or TaskCanceledException or JSException)
+                return true;
+
+            return exception.InnerException is not null && IsConnectivityError(exception.InnerException);
+        }
     }
 }

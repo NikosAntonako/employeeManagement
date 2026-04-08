@@ -1,113 +1,190 @@
 ﻿@page "/"
+@inject Microsoft.Extensions.Logging.ILogger<EmployeeListViewModel> employeeListLogger
+@inject IToastNotificationService ToastService
+@inject IDialogService DialogService
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Employee List</h3>
 
-    <!-- Notification Area -->
-    <Notification @bind-Message="_viewModel.SuccessMessage" AlertType="success"/>
-    <Notification @bind-Message="_viewModel.ErrorMessage" AlertType="danger"/>
-
-    <!-- Filter Form -->
     <div class="mb-3">
-        <input class="form-control"
-               placeholder="Search by Name, Position or Department"
-               value="@_viewModel.SearchTerm"
-               @oninput="_viewModel.OnSearchInput" />
+        <DxTextBox CssClass="w-100"
+                   NullText="Search by Name, Position or Department"
+                   Text="@_viewModel.SearchTerm"
+                   TextChanged="OnSearchTextChanged" />
     </div>
 
-    <!-- Page Size Selector -->
-    <div class="mb-3">
-        <label for="pageSizeSelect">Page Size:</label>
-        <select id="pageSizeSelect" class="form-select d-inline w-auto ms-2"
-                @onchange="OnPageSizeChanged"
-                value="@_viewModel.PageSize">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-        </select>
+    <div class="mb-3 d-flex align-items-end gap-3 flex-wrap">
+        <div>
+            <label class="form-label">Page Size</label>
+            <DxComboBox Data="@PageSizes"
+                        TData="int"
+                        TValue="int"
+                        Value="@_viewModel.PageSize"
+                        ValueChanged="@OnPageSizeChanged"
+                        ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Never"
+                        CssClass="page-size-combo" />
+        </div>
+
+        <DxButton Text="Add New Employee"
+                  RenderStyle="ButtonRenderStyle.Primary"
+                  Click="@_viewModel.AddEmployee" />
     </div>
 
-    <button class="btn btn-primary mb-3" @onclick="_viewModel.AddEmployee">Add New Employee</button>
-
-    @if (!(_viewModel.Employees?.Any() ?? false))
+    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && !(_viewModel.Employees?.Any() ?? false))
+    {
+        <p>Employee data is temporarily unavailable.</p>
+    }
+    else if (!(_viewModel.Employees?.Any() ?? false))
     {
         <p>No employees found.</p>
     }
     else
     {
-        <!-- Employee Values -->
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Department</th>
-                    <th>Salary</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var employee in _viewModel.Employees ?? Enumerable.Empty<EmployeeViewModel>())
-                {
-                    <tr>
-                        <td>@employee.Id</td>
-                        <td>@employee.Name</td>
-                        <td>@employee.Position</td>
-                        <td>@employee.Department</td>
-                        <td>@(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")</td>
-                        <td>
-                            <!-- Edit Button-->
-                            <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => 
-                                _viewModel.EditEmployee(employee.Id)">Edit</button>
-                            <!-- Delete Button-->
-                            <button class="btn btn-sm btn-outline-danger" @onclick="() => 
-                                _viewModel.DeleteEmployee(employee.Id)">Delete</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <DxGrid Data="@_viewModel.Employees"
+                CssClass="mb-3">
+            <Columns>
+                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Id)" Caption="Id" />
+                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Name)" Caption="Name" />
+                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Position)" Caption="Position" />
+                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Department)" Caption="Department" />
+                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Salary)" Caption="Salary">
+                    <CellDisplayTemplate Context="cellContext">
+                        @{
+                            var employee = (EmployeeViewModel)cellContext.DataItem;
+                        }
+                        @(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")
+                    </CellDisplayTemplate>
+                </DxGridDataColumn>
+                <DxGridDataColumn Caption="Actions">
+                    <CellDisplayTemplate Context="cellContext">
+                        @{
+                            var employee = (EmployeeViewModel)cellContext.DataItem;
+                        }
+                        <div class="d-flex gap-2">
+                            <DxButton Text="Edit"
+                                      RenderStyle="ButtonRenderStyle.Secondary"
+                                      RenderStyleMode="ButtonRenderStyleMode.Outline"
+                                      Click="@(() => _viewModel.EditEmployee(employee.Id))" />
+                            <DxButton Text="Delete"
+                                      RenderStyle="ButtonRenderStyle.Danger"
+                                      RenderStyleMode="ButtonRenderStyleMode.Outline"
+                                      Click="@(() => ConfirmDeleteAsync(employee))" />
+                        </div>
+                    </CellDisplayTemplate>
+                </DxGridDataColumn>
+            </Columns>
+        </DxGrid>
 
-        <!-- Pagination UI-->
-        <div>
-            <button @onclick="() => _viewModel.GoToPage(_viewModel.CurrentPage - 1)" 
-                disabled="@((_viewModel.CurrentPage == 1))">Previous</button>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span>Page @_viewModel.CurrentPage of @_viewModel.TotalPages</span>
-            <button @onclick="() => _viewModel.GoToPage(_viewModel.CurrentPage + 1)" 
-                disabled="@((_viewModel.CurrentPage == _viewModel.TotalPages))">Next</button>
+
+            <DxPager PageCount="@_viewModel.TotalPages"
+                     ActivePageIndex="@(_viewModel.CurrentPage - 1)"
+                     ActivePageIndexChanged="OnActivePageIndexChanged"
+                     NavigationMode="PagerNavigationMode.NumericButtons"
+                     VisibleNumericButtonCount="5" />
         </div>
     }
 }
 else
 {
-    <!-- Loading Indicator -->
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
 }
 
 @code {
-    EmployeeListViewModel? _viewModel;
+    private EmployeeListViewModel? _viewModel;
+    private static readonly IReadOnlyList<int> PageSizes = [5, 10, 20, 50];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _viewModel = new EmployeeListViewModel(this, client, navigationManager, JSRuntime, employeeListLogger);
+        await _viewModel.InitializeAsync(navigationManager.Uri);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
+        if (_viewModel is null)
+            return;
 
-        _viewModel = new EmployeeListViewModel(this, client, navigationManager, JSRuntime);
-        await _viewModel.InitializeAsync(navigationManager.Uri); 
+        if (!string.IsNullOrWhiteSpace(_viewModel.SuccessMessage))
+        {
+            ToastService.ShowToast(new ToastOptions
+            {
+                Title = "Success",
+                Text = _viewModel.SuccessMessage,
+                RenderStyle = ToastRenderStyle.Success,
+                ThemeMode = ToastThemeMode.Pastel
+            });
+
+            _viewModel.SuccessMessage = null;
+            await InvokeAsync(StateHasChanged);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && (_viewModel.Employees?.Any() ?? false))
+        {
+            ToastService.ShowToast(new ToastOptions
+            {
+                Title = "Error",
+                Text = _viewModel.ErrorMessage,
+                RenderStyle = ToastRenderStyle.Danger,
+                ThemeMode = ToastThemeMode.Pastel
+            });
+
+            _viewModel.ErrorMessage = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private Task OnSearchTextChanged(string? value)
+    {
+        if (_viewModel is null)
+            return Task.CompletedTask;
+
+        return _viewModel.OnSearchInput(new ChangeEventArgs
+        {
+            Value = value ?? string.Empty
+        });
+    }
+
+    private async Task OnPageSizeChanged(int newSize)
+    {
+        if (_viewModel is null)
+            return;
+
+        await _viewModel.SetPageSizeAsync(newSize);
         StateHasChanged();
     }
 
-    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    private Task OnActivePageIndexChanged(int pageIndex)
     {
-        if (_viewModel != null && int.TryParse(e.Value?.ToString(), out int newSize))
+        if (_viewModel is null)
+            return Task.CompletedTask;
+
+        return _viewModel.GoToPage(pageIndex + 1);
+    }
+
+    private async Task ConfirmDeleteAsync(EmployeeViewModel employee)
+    {
+        if (_viewModel is null)
+            return;
+
+        var confirmed = await DialogService.ConfirmAsync(new MessageBoxOptions
         {
-            await _viewModel.SetPageSizeAsync(newSize);
-            StateHasChanged();
-        }
+            Title = "Delete Employee",
+            Text = $"Are you sure you want to delete employee '{employee.Name}'?",
+            OkButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            RenderStyle = MessageBoxRenderStyle.Danger
+        });
+
+        if (!confirmed)
+            return;
+
+        await _viewModel.DeleteEmployeeConfirmedAsync(employee.Id);
+        StateHasChanged();
     }
 }

@@ -17,14 +17,12 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
     /// <returns>An EmployeeResponseDto containing the data from the specified employee.</returns>
     private static EmployeeResponseDto MapToResponse(Employee employee)
     {
-        return new EmployeeResponseDto
-        {
-            Id = employee.Id,
-            Name = employee.Name,
-            Position = employee.Position,
-            Department = employee.Department,
-            Salary = employee.Salary
-        };
+        return new EmployeeResponseDto(
+            employee.Id,
+            employee.Name,
+            employee.Position,
+            employee.Department,
+            employee.Salary);
     }
 
     /// </inheritdoc>
@@ -96,11 +94,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
 
         var items = employees.Select(MapToResponse).ToList();
 
-        return new PagedResultDto
-        {
-            Items = items,
-            TotalPages = totalPages
-        };
+        return new PagedResultDto(items, totalEmployees, totalPages, request.PageNumber, request.PageSize);
     }
 
     public async Task<EmployeeResponseDto> GetByIdAsync(int id)

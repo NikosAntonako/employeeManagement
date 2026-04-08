@@ -6,12 +6,10 @@
                 <FocusOnNavigate RouteData="@routeData" Selector="h1" />
             </ChildContent>
             <ErrorContent>
-                <h3>An error occurred.</h3>
+                <h3>We couldn't complete that request.</h3>
                 <p>
-                    We're sorry, but an unexpected error occured. Please try refreshing
-                    the page or contact support if the problem persists.
+                    The app hit an unexpected problem. If the API is offline, start it and try again.
                 </p>
-                <p>@context.Message</p>
                 <a href="/" class="btn btn-primary">Go to Home Page</a>
             </ErrorContent>
         </ErrorBoundary>
