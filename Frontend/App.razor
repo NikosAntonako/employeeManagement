@@ -1,6 +1,20 @@
 ﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        <ErrorBoundary>
+            <ChildContent>
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </ChildContent>
+            <ErrorContent>
+                <h3>An error occurred.</h3>
+                <p>
+                    We're sorry, but an unexpected error occured. Please try refreshing
+                    the page or contact support if the problem persists.
+                </p>
+                <p>@context.Message</p>
+                <a href="/" class="btn btn-primary">Go to Home Page</a>
+            </ErrorContent>
+        </ErrorBoundary>
     </Found>
 </Router>
+

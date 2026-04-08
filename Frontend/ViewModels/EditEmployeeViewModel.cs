@@ -35,7 +35,7 @@ public class EditEmployeeViewModel : BaseViewModel
         Initialized = true;
     }
 
-    public HttpClient _httpClient = default!;
+    private readonly HttpClient _httpClient = default!;
 
     // 2. Parameters and fields
     public int Id { get; set; }
@@ -82,9 +82,15 @@ public class EditEmployeeViewModel : BaseViewModel
                 ErrorMessage = await response.GetErrorMessageAsync($"Failed to load employee with id {Id}.");
             }
         }
+        catch (HttpRequestException exception)
+        {
+            ErrorMessage = "Unable to connect to the server. Please try again later.";
+            Console.Error.WriteLine($"API connection error loading employee {Id}: {exception.Message}");
+        }
         catch (Exception exception)
         {
-            ErrorMessage = "Failed to load employee: " + exception.Message;
+            ErrorMessage = "Something went wrong while loading the employee. Please try again.";
+            Console.Error.WriteLine($"Error loading employee {Id}: {exception.Message}");
         }
     }
 
@@ -112,10 +118,15 @@ public class EditEmployeeViewModel : BaseViewModel
                 ErrorMessage = await response.GetErrorMessageAsync($"Failed to update employee with id {Id}.");
             }
         }
+        catch (HttpRequestException exception)
+        {
+            ErrorMessage = "Unable to connect to the server. Please try again later.";
+            Console.Error.WriteLine($"API connection error updating employee {Id}: {exception.Message}");
+        }
         catch (Exception exception)
         {
-            ErrorMessage = $"Error updating: {exception.Message}";
-            Console.Error.WriteLine($"Error updating: {exception.Message}");
+            ErrorMessage = "Something went wrong while updating the employee. Please try again.";
+            Console.Error.WriteLine($"Error updating employee {Id}: {exception.Message}");
         }
         finally
         {

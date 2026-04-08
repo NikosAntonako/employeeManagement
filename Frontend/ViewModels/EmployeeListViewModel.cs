@@ -30,11 +30,11 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
         PageTitle = "Employee List";
 
-        // initialize
+        // Initialize
         Initialized = true;
     }
 
-    public HttpClient _httpClient = default!;
+    private readonly HttpClient _httpClient = default!;
 
     // 2. Fields and properties
     public List<EmployeeViewModel>? Employees { get; set; }
@@ -73,22 +73,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 SuccessMessage = message;
         }
 
-        try
-        {
-            await LoadEmployees();
-        }
-        catch (HttpRequestException exception)
-        when (exception.Message.Contains("CORS", StringComparison.OrdinalIgnoreCase))
-        {
-            // CORS error handler
-            Employees = [];
-            Console.Error.WriteLine("CORS error: " + exception.Message);
-        }
-        catch (Exception exception)
-        {
-            Employees = [];
-            Console.Error.WriteLine("General error: " + exception.Message);
-        }
+        await LoadEmployees();
     }
 
     // 4. Event handlers and public methods
@@ -107,7 +92,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         // Clear previous notifications
         SuccessMessage = ErrorMessage = null;
 
-        var employee = Employees?.FirstOrDefault(emp => emp.Id == id);
+        var employee = Employees?.FirstOrDefault(employee => employee.Id == id);
         string employeeName = employee?.Name ?? $"ID {id}";
 
         // Show confirmation dialog
@@ -137,9 +122,14 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 ErrorMessage = await response.GetErrorMessageAsync($"Failed to delete employee '{employeeName}' with id {id}.");
             }
         }
+        catch (HttpRequestException exception)
+        {
+            ErrorMessage = $"Unable to connect to the server. Could not delete '{employeeName}'.";
+            Console.Error.WriteLine($"API connection error deleting '{employeeName}': {exception.Message}");
+        }
         catch (Exception exception)
         {
-            ErrorMessage = $"Error deleting '{employeeName}' with id {id}: {exception.Message}";
+            ErrorMessage = $"Something went wrong while deleting '{employeeName}'. Please try again.";
             Console.Error.WriteLine($"Error deleting '{employeeName}' with id {id}: {exception.Message}");
         }
         finally
@@ -183,6 +173,20 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 ErrorMessage = await response.GetErrorMessageAsync("Failed to load employees.");
             }
         }
+        catch (HttpRequestException exception)
+        {
+            Employees = [];
+            TotalPages = 1;
+            ErrorMessage = "Unable to connect to the server. Please try again later.";
+            Console.Error.WriteLine("API connection error: " + exception.Message);
+        }
+        catch (Exception exception)
+        {
+            Employees = [];
+            TotalPages = 1;
+            ErrorMessage = "Something went wrong while loading employees. Please try again.";
+            Console.Error.WriteLine("General error: " + exception.Message);
+        }
         finally
         {
             IsLoading = false;
@@ -219,7 +223,8 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         }
         catch (Exception exception)
         {
-            ErrorMessage = $"Search failed: {exception.Message}";
+            ErrorMessage = "Something went wrong while searching. Please try again.";
+            Console.Error.WriteLine($"Search error: {exception.Message}");
             Employees = [];
         }
     }

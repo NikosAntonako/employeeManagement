@@ -33,53 +33,58 @@ public class AddEmployeeViewModel : BaseViewModel
         //component.StateHasChanged();
     }
 
-    public HttpClient _httpClient = default!;
+    private readonly HttpClient _httpClient = default!;
 
     // 2. Fields and properties
-    public readonly EmployeeInput employee = new();
+    public readonly EmployeeInput Employee = new();
 
     // Notification Fields
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
 
     // Loading indicator true = on, false = off
-    public bool isLoading = false;
+    public bool IsLoading = false;
 
     // 3. Event handlers and public methods
     public async Task HandleValidSubmit()
     {
         // Turn Loading on
-        isLoading = true;
+        IsLoading = true;
         // Clear previous error
         SuccessMessage = ErrorMessage = null;
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("Employee/Create", employee);
+            var response = await _httpClient.PostAsJsonAsync("Employee/Create", Employee);
 
             if (response.IsSuccessStatusCode)
             {
                 var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
                 var createdEmployee = apiResponse?.Data;
-                SuccessMessage = $"New Employee '{createdEmployee?.Name ?? employee.Name}' " +
+                SuccessMessage = $"New Employee '{createdEmployee?.Name ?? Employee.Name}' " +
                     $"with id {createdEmployee?.Id} was added successfully.";
                 Navigation.NavigateTo($"/?success={Uri.EscapeDataString(SuccessMessage)}");
             }
             else
             {
-                ErrorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{employee.Name}'. " +
+                ErrorMessage = await response.GetErrorMessageAsync($"Failed to add employee '{Employee.Name}'. " +
                     $"Please check your input and try again.");
             }
         }
+        catch (HttpRequestException exception)
+        {
+            ErrorMessage = "Unable to connect to the server. Please try again later.";
+            Console.Error.WriteLine($"API connection error adding '{Employee.Name}': {exception.Message}");
+        }
         catch (Exception exception)
         {
-            ErrorMessage = $"Error adding '{employee.Name}': {exception.Message}";
-            Console.Error.WriteLine($"Error adding '{employee.Name}': {exception.Message}");
+            ErrorMessage = $"Something went wrong while adding '{Employee.Name}'. Please try again.";
+            Console.Error.WriteLine($"Error adding '{Employee.Name}': {exception.Message}");
         }
         finally
         {
             // Turn Loading off
-            isLoading = false;
+            IsLoading = false;
         }
     }
 
@@ -90,9 +95,9 @@ public class AddEmployeeViewModel : BaseViewModel
 
     public void ResetForm()
     {
-        employee.Name = "";
-        employee.Position = "";
-        employee.Department = "";
-        employee.Salary = null;
+        Employee.Name = "";
+        Employee.Position = "";
+        Employee.Department = "";
+        Employee.Salary = null;
     }
 }
