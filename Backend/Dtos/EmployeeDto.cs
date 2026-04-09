@@ -6,11 +6,6 @@ namespace Backend.Dtos;
 /// Represents a data transfer object containing basic information about an employee, including name, position,
 /// department, and salary.
 /// </summary>
-/// <remarks>
-/// This type is typically used to transfer employee data between application layers or services. All
-/// string properties are required and have validation constraints to ensure data integrity. The class is immutable
-/// outside of object initialization and is not intended for domain logic or persistence operations.
-/// </remarks>
 public sealed record EmployeeDto
 {
     [Required(ErrorMessage = "Name is required.")]

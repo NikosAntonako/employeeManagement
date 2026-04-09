@@ -1,13 +1,10 @@
-﻿namespace Backend.Middleware;
+﻿using System.Diagnostics;
+
+namespace Backend.Middleware;
 
 /// <summary>
-/// Middleware that logs HTTP request and response information as part of the ASP.NET Core request pipeline.
+/// Middleware that logs HTTP request/response details for each request.
 /// </summary>
-/// <remarks>This middleware logs the HTTP method and path of incoming requests, as well as the status code of
-/// outgoing responses, when information-level logging is enabled. It should be registered early in the pipeline to
-/// capture all relevant request and response data.</remarks>
-/// <param name="next">The next middleware delegate in the request pipeline. Cannot be null.</param>
-/// <param name="logger">The logger used to record request and response information. Cannot be null.</param>
 public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger)
 {
     private readonly RequestDelegate _next = next;
@@ -15,16 +12,47 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Request {Method} {Path}", context.Request.Method, context.Request.Path);
-        }
+        var stopwatch = Stopwatch.StartNew();
 
         await _next(context);
 
-        if (_logger.IsEnabled(LogLevel.Information))
+        stopwatch.Stop();
+
+        var statusCode = context.Response.StatusCode;
+        var method = context.Request.Method;
+        var path = context.Request.Path;
+        var traceId = context.TraceIdentifier;
+        var elapsedMs = stopwatch.ElapsedMilliseconds;
+
+        if (statusCode >= StatusCodes.Status500InternalServerError)
         {
-            _logger.LogInformation("Response {StatusCode}", context.Response.StatusCode);
+            _logger.LogError(
+                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms. TraceId: {TraceId}",
+                method,
+                path,
+                statusCode,
+                elapsedMs,
+                traceId);
+        }
+        else if (statusCode >= StatusCodes.Status400BadRequest)
+        {
+            _logger.LogWarning(
+                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms. TraceId: {TraceId}",
+                method,
+                path,
+                statusCode,
+                elapsedMs,
+                traceId);
+        }
+        else if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms. TraceId: {TraceId}",
+                method,
+                path,
+                statusCode,
+                elapsedMs,
+                traceId);
         }
     }
 }

@@ -5,11 +5,6 @@ namespace Backend.Dtos;
 /// <summary>
 /// Represents the set of query parameters used to filter, sort, and paginate employee search results.
 /// </summary>
-/// <remarks>
-/// This DTO encapsulates user-supplied criteria for employee list queries, including pagination,
-/// sorting, and filtering options. Paging values are validated, sort directions are restricted
-/// to ascending or descending, and optional text filters have length constraints.
-/// </remarks>
 public sealed record EmployeeQueryDto
 {
     [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0.")]

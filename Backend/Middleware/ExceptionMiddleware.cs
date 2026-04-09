@@ -3,16 +3,12 @@
 namespace Backend.Middleware;
 
 /// <summary>
-/// Middleware that handles unhandled exceptions by returning standardized JSON error responses with appropriate HTTP
-/// status codes.
+/// Middleware that handles unhandled exceptions by returning standardized JSON error responses.
 /// </summary>
-/// <remarks>This middleware maps specific exception types to HTTP status codes: 404 for KeyNotFoundException, 400
-/// for ArgumentException, and 500 for all other exceptions. For 500 errors, the response omits the exception message
-/// for security reasons. Place this middleware early in the pipeline to ensure consistent error handling.</remarks>
-/// <param name="next">The next middleware component in the request processing pipeline.</param>
-public class ExceptionMiddleware(RequestDelegate next)
+public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
 {
     private readonly RequestDelegate _next = next;
+    private readonly ILogger<ExceptionMiddleware> _logger = logger;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -22,22 +18,30 @@ public class ExceptionMiddleware(RequestDelegate next)
         }
         catch (Exception exception)
         {
-            context.Response.ContentType = "application/json";
-
-            context.Response.StatusCode = exception switch
+            var statusCode = exception switch
             {
                 KeyNotFoundException => StatusCodes.Status404NotFound,
                 ArgumentException => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status500InternalServerError
             };
 
-            // Pass exception message as detail, or null for 500 errors (security)
-            var detail = context.Response.StatusCode == StatusCodes.Status500InternalServerError
+            _logger.LogError(
+                exception,
+                "Unhandled exception for HTTP {Method} {Path}. Responding with {StatusCode}. TraceId: {TraceId}",
+                context.Request.Method,
+                context.Request.Path,
+                statusCode,
+                context.TraceIdentifier);
+
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = statusCode;
+
+            var detail = statusCode == StatusCodes.Status500InternalServerError
                 ? null
                 : exception.Message;
 
             await context.Response.WriteAsJsonAsync(
-                new ApiResponse<object>(context.Response.StatusCode, detail: detail));
+                new ApiResponse<object>(statusCode, detail: detail));
         }
     }
 }
