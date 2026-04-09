@@ -1,5 +1,4 @@
 ﻿using Frontend.Models;
-using Frontend.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
@@ -121,8 +120,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             }
             else
             {
-                ErrorMessage = await response.GetErrorMessageAsync(
-                    $"We couldn't delete employee '{employeeName}'. Please try again.");
+                ErrorMessage = $"We couldn't delete employee '{employeeName}'. Please try again.";
             }
         }
         catch (HttpRequestException exception)
@@ -172,8 +170,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             }
             else
             {
-                ErrorMessage = await response.GetErrorMessageAsync(
-                    $"We couldn't delete employee '{employeeName}'. Please try again.");
+                ErrorMessage = $"We couldn't delete employee '{employeeName}'. Please try again.";
             }
         }
         catch (HttpRequestException exception)
@@ -232,7 +229,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             {
                 Employees = [];
                 TotalPages = 1;
-                ErrorMessage = await response.GetErrorMessageAsync("We couldn't load the employee list.");
+                ErrorMessage = "We couldn't load the employee list.";
             }
         }
         catch (HttpRequestException exception)

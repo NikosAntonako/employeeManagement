@@ -1,8 +1,6 @@
 ﻿using Backend.Data;
 using Backend.Dtos;
 using Backend.Models;
-using Dapper.Contrib.Extensions;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
@@ -14,7 +12,7 @@ namespace Backend.Services;
 /// This service supports querying, creating, updating, and deleting employee records,
 /// and maps persistence models to response DTOs returned by the API.
 /// </remarks>
-public class EmployeeService(EmployeeContext context, IConfiguration configuration) : IEmployeeService
+public class EmployeeService(EmployeeContext context) : IEmployeeService
 {
     /// <summary>
     /// Maps an <see cref="Employee"/> entity to an <see cref="EmployeeResponseDto"/>.
@@ -27,17 +25,19 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
             employee.Id,
             employee.Name,
             employee.Position,
-            employee.Department,
+            employee.Department.Name,
             employee.Salary);
     }
 
     /// <inheritdoc />
     public async Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request)
     {
-        IQueryable<Employee> query = context.Employees.AsNoTracking();
+        IQueryable<Employee> query = context.Employees
+            .AsNoTracking()
+            .Include(employee => employee.Department);
 
         if (!string.IsNullOrWhiteSpace(request.Department))
-            query = query.Where(employee => employee.Department == request.Department);
+            query = query.Where(employee => employee.Department.Name == request.Department);
 
         if (!string.IsNullOrWhiteSpace(request.Position))
             query = query.Where(employee => employee.Position == request.Position);
@@ -49,7 +49,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
             query = query.Where(employee =>
                 employee.Name.Contains(term) ||
                 employee.Position.Contains(term) ||
-                employee.Department.Contains(term));
+                employee.Department.Name.Contains(term));
         }
 
         var sorted = false;
@@ -106,10 +106,22 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
     /// <inheritdoc />
     public async Task<EmployeeResponseDto> GetByIdAsync(int id)
     {
-        await using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
-        await connection.OpenAsync();
+        // apper.Contrib version kept temporarily for reference.
+        //
+        // await using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        // await connection.OpenAsync();
+        //
+        // var employee = await connection.GetAsync<Employee>(id);
+        //
+        // if (employee == null)
+        //     throw new KeyNotFoundException($"Employee with id {id} not found.");
+        //
+        // return MapToResponse(employee);
 
-        var employee = await connection.GetAsync<Employee>(id);
+        var employee = await context.Employees
+            .AsNoTracking()
+            .Include(currentEmployee => currentEmployee.Department)
+            .FirstOrDefaultAsync(currentEmployee => currentEmployee.Id == id);
 
         if (employee == null)
             throw new KeyNotFoundException($"Employee with id {id} not found.");
@@ -120,11 +132,17 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
     /// <inheritdoc />
     public async Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee)
     {
+        var department = await context.Departments.FindAsync(employee.DepartmentId);
+
+        if (department == null)
+            throw new KeyNotFoundException($"Department with id {employee.DepartmentId} not found.");
+
         var newEmployee = new Employee
         {
             Name = employee.Name,
             Position = employee.Position,
-            Department = employee.Department,
+            DepartmentId = employee.DepartmentId,
+            Department = department,
             Salary = employee.Salary
         };
 
@@ -137,14 +155,22 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
     /// <inheritdoc />
     public async Task<EmployeeResponseDto> UpdateAsync(int id, EmployeeDto updatedEmployee)
     {
-        var employee = await context.Employees.FindAsync(id);
+        var employee = await context.Employees
+            .Include(currentEmployee => currentEmployee.Department)
+            .FirstOrDefaultAsync(currentEmployee => currentEmployee.Id == id);
 
         if (employee == null)
             throw new KeyNotFoundException($"Employee with id {id} not found.");
 
+        var department = await context.Departments.FindAsync(updatedEmployee.DepartmentId);
+
+        if (department == null)
+            throw new KeyNotFoundException($"Department with id {updatedEmployee.DepartmentId} not found.");
+
         employee.Name = updatedEmployee.Name;
         employee.Position = updatedEmployee.Position;
-        employee.Department = updatedEmployee.Department;
+        employee.DepartmentId = updatedEmployee.DepartmentId;
+        employee.Department = department;
         employee.Salary = updatedEmployee.Salary;
 
         await context.SaveChangesAsync();

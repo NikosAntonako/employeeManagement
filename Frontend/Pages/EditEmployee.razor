@@ -1,6 +1,7 @@
 ﻿@page "/edit/{Id:int}"
 @inject Microsoft.Extensions.Logging.ILogger<EditEmployeeViewModel> editEmployeeLogger
 @inject IToastNotificationService ToastService
+@using Frontend.Models
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
@@ -29,15 +30,17 @@
                 </DxFormLayoutItem>
 
                 <DxFormLayoutItem Caption="Department">
-                    <DxComboBox TData="string"
+                    <DxComboBox TData="DepartmentDto"
                                 TValue="string"
                                 Data="@_viewModel.Departments"
-                                @bind-Value="_viewModel.Employee.Department"
-                                BindValueMode="@BindValueMode.OnDelayedInput"
+                                ValueFieldName="Name"
+                                TextFieldName="Name"
+                                @bind-Text="_viewModel.Employee.DepartmentName"
+                                BindValueMode="@BindValueMode.OnInput"
                                 AllowUserInput="true"
                                 NullText="Select or enter a department"
                                 ClearButtonDisplayMode="@DataEditorClearButtonDisplayMode.Auto" />
-                    <ValidationMessage For="@(() => _viewModel.Employee!.Department)" />
+                    <ValidationMessage For="@(() => _viewModel.Employee!.DepartmentName)" />
                 </DxFormLayoutItem>
 
                 <DxFormLayoutItem Caption="Salary">

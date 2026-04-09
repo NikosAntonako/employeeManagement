@@ -20,11 +20,8 @@ public sealed record EmployeeDto
     [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Position must contain only letters and spaces.")]
     public required string Position { get; set; }
 
-    [Required(ErrorMessage = "Department is required.")]
-    [MinLength(1, ErrorMessage = "Department cannot be empty.")]
-    [StringLength(50, ErrorMessage = "Department cannot exceed 50 characters.")]
-    [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z\s]+$", ErrorMessage = "Department must contain only letters and spaces.")]
-    public required string Department { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "DepartmentId must be greater than 0.")]
+    public int DepartmentId { get; set; }
 
     [Range(0, 9999999.99, ErrorMessage = "Salary must be between 0 and 9,999,999.99.")]
     public decimal? Salary { get; set; }

@@ -1,19 +1,10 @@
 ﻿using Frontend.Models;
-using Frontend.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 
 namespace Frontend.ViewModels;
 
-/// <summary>
-/// Represents the view model for editing an employee in the application, providing properties and methods to load,
-/// update, and manage employee data and related UI state.
-/// </summary>
-/// <remarks>This view model is intended for use in Blazor components that handle editing employee information. It
-/// manages the retrieval and update of employee data via HTTP requests, and exposes properties for tracking loading
-/// state and user notifications. The view model also provides navigation support to return to the main page after
-/// editing. All operations are asynchronous where network communication is involved.</remarks>
 public class EditEmployeeViewModel : BaseViewModel
 {
     public EditEmployeeViewModel(
@@ -32,66 +23,58 @@ public class EditEmployeeViewModel : BaseViewModel
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
         Id = employeeId;
         PageTitle = "Edit Employee";
-
-        // initialize
         Initialized = true;
     }
 
     private readonly HttpClient _httpClient = default!;
 
-    // 2. Parameters and fields
     public int Id { get; set; }
     public EmployeeInput? Employee { get; set; }
     public EmployeeInput? OriginalEmployee { get; set; }
-    public IReadOnlyList<string> Departments { get; private set; } = [];
+    public IReadOnlyList<DepartmentDto> Departments { get; private set; } = [];
 
-    // Notification Fields
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
+    public bool IsLoading { get; set; }
 
-    // Loading indicator true = on, false = off
-    public bool IsLoading { get; set; } = false;
-
-    // 3. Initialization method
     public async Task InitializeAsync()
     {
         try
         {
             var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
-                var employeeData = apiResponse?.Data;
-
-                if (employeeData == null)
-                {
-                    ErrorMessage = "We couldn't load this employee.";
-                    return;
-                }
-
-                // Map employeeData to EmployeeInput
-                Employee = new EmployeeInput
-                {
-                    Name = employeeData.Name,
-                    Position = employeeData.Position,
-                    Department = employeeData.Department,
-                    Salary = employeeData.Salary
-                };
-                OriginalEmployee = new EmployeeInput
-                {
-                    Name = employeeData.Name,
-                    Position = employeeData.Position,
-                    Department = employeeData.Department,
-                    Salary = employeeData.Salary
-                };
-
-                await LoadDepartmentsAsync();
+                ErrorMessage = "We couldn't load this employee.";
+                return;
             }
-            else
+
+            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+            var employeeData = apiResponse?.Data;
+
+            if (employeeData == null)
             {
-                ErrorMessage = await response.GetErrorMessageAsync("We couldn't load this employee.");
+                ErrorMessage = "We couldn't load this employee.";
+                return;
             }
+
+            Employee = new EmployeeInput
+            {
+                Name = employeeData.Name,
+                Position = employeeData.Position,
+                DepartmentName = employeeData.Department,
+                Salary = employeeData.Salary
+            };
+
+            OriginalEmployee = new EmployeeInput
+            {
+                Name = employeeData.Name,
+                Position = employeeData.Position,
+                DepartmentName = employeeData.Department,
+                Salary = employeeData.Salary
+            };
+
+            await LoadDepartmentsAsync();
         }
         catch (HttpRequestException exception)
         {
@@ -100,74 +83,79 @@ public class EditEmployeeViewModel : BaseViewModel
         }
         catch (Exception exception)
         {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = "We couldn't load this employee right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while loading employee {EmployeeId}", Id);
-            }
-            else
-            {
-                ErrorMessage = "Something went wrong while loading this employee. Please try again.";
-                Logger.LogError(exception, "Unexpected error while loading employee {EmployeeId}", Id);
-            }
+            ErrorMessage = "Something went wrong while loading this employee. Please try again.";
+            Logger.LogError(exception, "Unexpected error while loading employee {EmployeeId}", Id);
         }
     }
 
     private async Task LoadDepartmentsAsync()
     {
-        try
+        var response = await _httpClient.GetAsync("Department/GetAll");
+
+        if (!response.IsSuccessStatusCode)
         {
-            var response = await _httpClient.GetAsync("Employee/GetAll?pageNumber=1&pageSize=1000");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Departments = Employee is not null && !string.IsNullOrWhiteSpace(Employee.Department)
-                    ? [Employee.Department]
-                    : [];
-                return;
-            }
-
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResult>>();
-            var employees = apiResponse?.Data?.Items ?? [];
-
-            Departments = employees
-                .Select(employee => employee.Department)
-                .Append(Employee?.Department ?? string.Empty)
-                .Where(department => !string.IsNullOrWhiteSpace(department))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(department => department)
-                .ToArray();
+            Departments = [];
+            return;
         }
-        catch (HttpRequestException exception)
-        {
-            Logger.LogWarning(exception, "HTTP request failed while loading departments for Edit Employee {EmployeeId}", Id);
-            Departments = Employee is not null && !string.IsNullOrWhiteSpace(Employee.Department)
-                ? [Employee.Department]
-                : [];
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-                Logger.LogWarning(exception, "Connectivity issue while loading departments for Edit Employee {EmployeeId}", Id);
-            else
-                Logger.LogError(exception, "Unexpected error while loading departments for Edit Employee {EmployeeId}", Id);
 
-            Departments = Employee is not null && !string.IsNullOrWhiteSpace(Employee.Department)
-                ? [Employee.Department]
-                : [];
-        }
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
+        Departments = apiResponse?.Data ?? [];
     }
 
-    // 4. Event handlers and public methods
     public async Task HandleValidSubmit()
     {
-        // Turn Loading on
         IsLoading = true;
-        // Clear previous notifications
         SuccessMessage = ErrorMessage = null;
 
         try
         {
+            if (Employee == null)
+                return;
+
+            Employee.DepartmentName = Employee.DepartmentName.Trim();
+
+            var existingDepartment = Departments.FirstOrDefault(department =>
+                string.Equals(department.Name, Employee.DepartmentName, StringComparison.OrdinalIgnoreCase));
+
+            if (existingDepartment != null)
+            {
+                Employee.DepartmentId = existingDepartment.Id;
+            }
+            else
+            {
+                var createDepartmentResponse = await _httpClient.PostAsJsonAsync(
+                    "Department/Create",
+                    new CreateDepartmentInput
+                    {
+                        Name = Employee.DepartmentName.Trim()
+                    });
+
+                if (!createDepartmentResponse.IsSuccessStatusCode)
+                {
+                    ErrorMessage = "We couldn't create the department. Please try again.";
+                    return;
+                }
+
+                var createdDepartmentApiResponse =
+                    await createDepartmentResponse.Content.ReadFromJsonAsync<ApiResponse<DepartmentDto>>();
+
+                var createdDepartment = createdDepartmentApiResponse?.Data;
+
+                if (createdDepartment == null)
+                {
+                    ErrorMessage = "We couldn't create the department. Please try again.";
+                    return;
+                }
+
+                Employee.DepartmentId = createdDepartment.Id;
+                Employee.DepartmentName = createdDepartment.Name;
+                Departments = Departments
+                    .Append(createdDepartment)
+                    .DistinctBy(department => department.Name, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(department => department.Name)
+                    .ToArray();
+            }
+
             var response = await _httpClient.PutAsJsonAsync($"Employee/Update/{Id}", Employee);
 
             if (response.IsSuccessStatusCode)
@@ -179,8 +167,7 @@ public class EditEmployeeViewModel : BaseViewModel
             }
             else
             {
-                ErrorMessage = await response.GetErrorMessageAsync(
-                    "We couldn't save the changes for this employee. Please try again.");
+                ErrorMessage = "We couldn't save the changes for this employee. Please try again.";
             }
         }
         catch (HttpRequestException exception)
@@ -190,20 +177,11 @@ public class EditEmployeeViewModel : BaseViewModel
         }
         catch (Exception exception)
         {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = "We couldn't save the changes right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while updating employee {EmployeeId}", Id);
-            }
-            else
-            {
-                ErrorMessage = "Something went wrong while saving the changes. Please try again.";
-                Logger.LogError(exception, "Unexpected error while updating employee {EmployeeId}", Id);
-            }
+            ErrorMessage = "Something went wrong while saving the changes. Please try again.";
+            Logger.LogError(exception, "Unexpected error while updating employee {EmployeeId}", Id);
         }
         finally
         {
-            // Turn Loading off
             IsLoading = false;
         }
     }
@@ -214,7 +192,8 @@ public class EditEmployeeViewModel : BaseViewModel
         {
             Employee.Name = OriginalEmployee.Name;
             Employee.Position = OriginalEmployee.Position;
-            Employee.Department = OriginalEmployee.Department;
+            Employee.DepartmentName = OriginalEmployee.DepartmentName;
+            Employee.DepartmentId = OriginalEmployee.DepartmentId;
             Employee.Salary = OriginalEmployee.Salary;
         }
     }

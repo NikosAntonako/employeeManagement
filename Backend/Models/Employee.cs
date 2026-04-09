@@ -11,6 +11,7 @@ public sealed class Employee
     public int Id { get; set; }
     public required string Name { get; set; }
     public required string Position { get; set; }
-    public required string Department { get; set; }
+    public int DepartmentId { get; set; }
+    public Department Department { get; set; } = default!;
     public decimal? Salary { get; set; }
 }

@@ -1,0 +1,86 @@
+@inherits ErrorBoundary
+@inject ILogger<DxPopupErrorBoundary> Logger
+@inject NavigationManager NavigationManager
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else
+{
+    <DxPopup Visible="@_popupVisible"
+             VisibleChanged="OnPopupVisibleChanged"
+             HeaderText="Unexpected error"
+             ShowCloseButton="true"
+             CloseOnEscape="true"
+             ShowFooter="true"
+             Width="480px">
+        <BodyContentTemplate>
+            <div class="p-2">
+                <p class="mb-2">@GetUserMessage(CurrentException)</p>
+
+                @if (IsConnectivityError(CurrentException))
+                {
+                    <p class="text-muted mb-0">
+                        Please verify that the backend is available and try again.
+                    </p>
+                }
+            </div>
+        </BodyContentTemplate>
+        <FooterContentTemplate>
+            <DxButton Text="Go Home"
+                      RenderStyle="@ButtonRenderStyle.Secondary"
+                      Click="GoHome" />
+            <DxButton Text="Reload"
+                      RenderStyle="@ButtonRenderStyle.Primary"
+                      CssClass="ms-2"
+                      Click="ReloadPage" />
+        </FooterContentTemplate>
+    </DxPopup>
+}
+
+@code {
+    private bool _popupVisible;
+
+    protected override Task OnErrorAsync(Exception exception)
+    {
+        _popupVisible = true;
+        Logger.LogError(exception, "Unhandled exception captured by DxPopup error boundary.");
+        return Task.CompletedTask;
+    }
+
+    private void OnPopupVisibleChanged(bool visible)
+    {
+        _popupVisible = visible;
+
+        if (!visible)
+            Recover();
+    }
+
+    private void GoHome()
+    {
+        _popupVisible = false;
+        Recover();
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void ReloadPage()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private static string GetUserMessage(Exception exception)
+    {
+        return IsConnectivityError(exception)
+            ? "The application couldn't reach the backend."
+            : "Something unexpected happened in the application.";
+    }
+
+    private static bool IsConnectivityError(Exception exception)
+    {
+        if (exception is HttpRequestException or TaskCanceledException or JSException)
+            return true;
+
+        return exception.InnerException is not null && IsConnectivityError(exception.InnerException);
+    }
+}
