@@ -113,3 +113,20 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.nav-tree  a,
+.nav-tree  a span {
+    color: #fff !important;
+}
+
+.nav-tree  a:hover,
+.nav-tree  a:hover span {
+    color: #fff !important;
+}
+
+.nav-tree  a.active,
+.nav-tree  a.active span,
+.nav-tree  a[aria-current="page"],
+.nav-tree  a[aria-current="page"] span {
+    color: #fff !important;
+}

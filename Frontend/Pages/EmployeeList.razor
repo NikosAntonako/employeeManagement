@@ -21,8 +21,7 @@
             <DxComboBox Data="@PageSizes"
                         TData="int"
                         TValue="int"
-                        Value="@_viewModel.PageSize"
-                        ValueChanged="@OnPageSizeChanged"
+                        @bind-Value="SelectedPageSize"
                         ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Never"
                         CssClass="page-size-combo" />
         </div>
@@ -31,6 +30,13 @@
                   RenderStyle="ButtonRenderStyle.Primary"
                   Click="@_viewModel.AddEmployee" />
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && (_viewModel.Employees?.Any() ?? false))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_viewModel.ErrorMessage
+        </div>
+    }
 
     @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && !(_viewModel.Employees?.Any() ?? false))
     {
@@ -78,11 +84,13 @@
         </DxGrid>
 
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span>Page @_viewModel.CurrentPage of @_viewModel.TotalPages</span>
+            <span>
+                Showing @_viewModel.FirstItemNumber-@_viewModel.LastItemNumber of @_viewModel.TotalCount employees
+                (page @_viewModel.CurrentPage of @_viewModel.TotalPages)
+            </span>
 
             <DxPager PageCount="@_viewModel.TotalPages"
-                     ActivePageIndex="@(_viewModel.CurrentPage - 1)"
-                     ActivePageIndexChanged="OnActivePageIndexChanged"
+                     @bind-ActivePageIndex="PagerActivePageIndex"
                      NavigationMode="PagerNavigationMode.NumericButtons"
                      VisibleNumericButtonCount="5" />
         </div>
@@ -98,11 +106,14 @@ else
 @code {
     private EmployeeListViewModel? _viewModel;
     private static readonly IReadOnlyList<int> PageSizes = [5, 10, 20, 50];
+    private int _selectedPageSize = 10;
+    private int _pagerActivePageIndex;
 
     protected override async Task OnInitializedAsync()
     {
         _viewModel = new EmployeeListViewModel(this, client, navigationManager, JSRuntime, employeeListLogger);
         await _viewModel.InitializeAsync(navigationManager.Uri);
+        SyncPagerState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -139,32 +150,64 @@ else
         }
     }
 
-    private Task OnSearchTextChanged(string? value)
+    private async Task OnSearchTextChanged(string? value)
     {
         if (_viewModel is null)
-            return Task.CompletedTask;
+            return;
 
-        return _viewModel.OnSearchInput(new ChangeEventArgs
+        await _viewModel.OnSearchInput(new ChangeEventArgs
         {
             Value = value ?? string.Empty
         });
+
+        SyncPagerState();
+        StateHasChanged();
     }
 
-    private async Task OnPageSizeChanged(int newSize)
+    private int SelectedPageSize
+    {
+        get => _selectedPageSize;
+        set
+        {
+            if (_selectedPageSize == value)
+                return;
+
+            _selectedPageSize = value;
+            _ = ApplyPageSizeAsync(value);
+        }
+    }
+
+    private int PagerActivePageIndex
+    {
+        get => _pagerActivePageIndex;
+        set
+        {
+            if (_pagerActivePageIndex == value)
+                return;
+
+            _pagerActivePageIndex = value;
+            _ = LoadSelectedPageAsync(value);
+        }
+    }
+
+    private async Task ApplyPageSizeAsync(int newSize)
     {
         if (_viewModel is null)
             return;
 
         await _viewModel.SetPageSizeAsync(newSize);
-        StateHasChanged();
+        SyncPagerState();
+        await InvokeAsync(StateHasChanged);
     }
 
-    private Task OnActivePageIndexChanged(int pageIndex)
+    private async Task LoadSelectedPageAsync(int pageIndex)
     {
         if (_viewModel is null)
-            return Task.CompletedTask;
+            return;
 
-        return _viewModel.GoToPage(pageIndex + 1);
+        await _viewModel.GoToPage(pageIndex + 1);
+        SyncPagerState();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task ConfirmDeleteAsync(EmployeeViewModel employee)
@@ -185,6 +228,17 @@ else
             return;
 
         await _viewModel.DeleteEmployeeConfirmedAsync(employee.Id);
+        SyncPagerState();
         StateHasChanged();
     }
+
+    private void SyncPagerState()
+    {
+        if (_viewModel is null)
+            return;
+
+        _selectedPageSize = _viewModel.PageSize;
+        _pagerActivePageIndex = _viewModel.ActivePageIndex;
+    }
+
 }

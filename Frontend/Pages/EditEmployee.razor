@@ -1,12 +1,18 @@
 ﻿@page "/edit/{Id:int}"
 @inject Microsoft.Extensions.Logging.ILogger<EditEmployeeViewModel> editEmployeeLogger
-@inject IToastNotificationService ToastService
 @using Frontend.Models
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Edit Employee</h3>
+
+    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && _viewModel.Employee != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_viewModel.ErrorMessage
+        </div>
+    }
 
     @if (_viewModel.Employee != null)
     {
@@ -93,7 +99,6 @@ else
     private EditContext? _editContext;
     private bool _isFormValid;
     private bool _needsValidation;
-    private string? _lastToastMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,7 +113,7 @@ else
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && _needsValidation)
         {
@@ -116,24 +121,7 @@ else
             ValidateForm();
         }
 
-        if (_viewModel is null || string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
-            return;
-
-        if (_lastToastMessage == _viewModel.ErrorMessage)
-            return;
-
-        _lastToastMessage = _viewModel.ErrorMessage;
-
-        ToastService.ShowToast(new ToastOptions
-        {
-            Title = "Error",
-            Text = _viewModel.ErrorMessage,
-            RenderStyle = ToastRenderStyle.Danger,
-            ThemeMode = ToastThemeMode.Pastel
-        });
-
-        _viewModel.ErrorMessage = null;
-        await InvokeAsync(StateHasChanged);
+        return Task.CompletedTask;
     }
 
     private void ValidateForm()
@@ -150,4 +138,5 @@ else
         _editContext?.Validate();
         StateHasChanged();
     }
+
 }

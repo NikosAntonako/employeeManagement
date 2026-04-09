@@ -1,6 +1,5 @@
 ﻿@page "/add"
 @inject Microsoft.Extensions.Logging.ILogger<AddEmployeeViewModel> addEmployeeLogger
-@inject IToastNotificationService ToastService
 @using Frontend.Models
 
 @if (_viewModel != null && _viewModel.Initialized)
@@ -8,9 +7,12 @@
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Add Employee</h3>
 
-    <DxButton Text="Test Error Boundary"
-              RenderStyle="@ButtonRenderStyle.Danger"
-              Click="ThrowTestException" />
+    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_viewModel.ErrorMessage
+        </div>
+    }
 
     <EditForm EditContext="_editContext" OnValidSubmit="_viewModel.HandleValidSubmit" Context="editFormContext">
         <DataAnnotationsValidator />
@@ -85,7 +87,6 @@ else
     private EditContext? _editContext;
     private bool _isFormValid;
     private bool _needsValidation;
-    private string? _lastToastMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,7 +98,7 @@ else
         await _viewModel.InitializeAsync();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && _needsValidation)
         {
@@ -105,24 +106,7 @@ else
             ValidateForm();
         }
 
-        if (_viewModel is null || string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
-            return;
-
-        if (_lastToastMessage == _viewModel.ErrorMessage)
-            return;
-
-        _lastToastMessage = _viewModel.ErrorMessage;
-
-        ToastService.ShowToast(new ToastOptions
-        {
-            Title = "Error",
-            Text = _viewModel.ErrorMessage,
-            RenderStyle = ToastRenderStyle.Danger,
-            ThemeMode = ToastThemeMode.Pastel
-        });
-
-        _viewModel.ErrorMessage = null;
-        await InvokeAsync(StateHasChanged);
+        return Task.CompletedTask;
     }
 
     private void ValidateForm()
@@ -140,8 +124,4 @@ else
         StateHasChanged();
     }
 
-    private static void ThrowTestException()
-    {
-        throw new InvalidOperationException("Test exception for error boundary.");
-    }
 }

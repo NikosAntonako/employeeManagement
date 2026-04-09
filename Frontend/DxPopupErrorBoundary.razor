@@ -1,86 +1,62 @@
-@inherits ErrorBoundary
 @inject ILogger<DxPopupErrorBoundary> Logger
-@inject NavigationManager NavigationManager
+@inject NavigationManager Navigation
 
-@if (CurrentException is null)
-{
-    @ChildContent
-}
-else
-{
-    <DxPopup Visible="@_popupVisible"
-             VisibleChanged="OnPopupVisibleChanged"
-             HeaderText="Unexpected error"
-             ShowCloseButton="true"
-             CloseOnEscape="true"
-             ShowFooter="true"
-             Width="480px">
-        <BodyContentTemplate>
-            <div class="p-2">
-                <p class="mb-2">@GetUserMessage(CurrentException)</p>
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">
+        @{
+            LogException(exception);
+        }
 
-                @if (IsConnectivityError(CurrentException))
-                {
-                    <p class="text-muted mb-0">
-                        Please verify that the backend is available and try again.
-                    </p>
-                }
-            </div>
-        </BodyContentTemplate>
-        <FooterContentTemplate>
-            <DxButton Text="Go Home"
-                      RenderStyle="@ButtonRenderStyle.Secondary"
-                      Click="GoHome" />
-            <DxButton Text="Reload"
-                      RenderStyle="@ButtonRenderStyle.Primary"
-                      CssClass="ms-2"
-                      Click="ReloadPage" />
-        </FooterContentTemplate>
-    </DxPopup>
-}
+        <DxPopup Visible="true"
+                 HeaderText="Unexpected error"
+                 CloseOnOutsideClick="false"
+                 ShowCloseButton="false"
+                 Width="420px">
+            <BodyContentTemplate>
+                <p class="mb-0">Something went wrong. Please try again later.</p>
+            </BodyContentTemplate>
+            <FooterContentTemplate>
+                <div class="d-flex justify-content-end gap-2">
+                    <DxButton Text="Go Home"
+                              RenderStyle="ButtonRenderStyle.Secondary"
+                              Click="GoHome" />
+                    <DxButton Text="Reload"
+                              RenderStyle="ButtonRenderStyle.Primary"
+                              Click="ReloadPage" />
+                </div>
+            </FooterContentTemplate>
+        </DxPopup>
+    </ErrorContent>
+</ErrorBoundary>
 
 @code {
-    private bool _popupVisible;
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
-    protected override Task OnErrorAsync(Exception exception)
+    private ErrorBoundary? _errorBoundary;
+    private Exception? _lastLoggedException;
+
+    private void LogException(Exception exception)
     {
-        _popupVisible = true;
-        Logger.LogError(exception, "Unhandled exception captured by DxPopup error boundary.");
-        return Task.CompletedTask;
-    }
+        if (ReferenceEquals(_lastLoggedException, exception))
+            return;
 
-    private void OnPopupVisibleChanged(bool visible)
-    {
-        _popupVisible = visible;
-
-        if (!visible)
-            Recover();
-    }
-
-    private void GoHome()
-    {
-        _popupVisible = false;
-        Recover();
-        NavigationManager.NavigateTo("/");
+        _lastLoggedException = exception;
+        Logger.LogError(exception, "Unhandled exception captured by ErrorBoundary");
     }
 
     private void ReloadPage()
     {
-        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        _lastLoggedException = null;
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
     }
 
-    private static string GetUserMessage(Exception exception)
+    private void GoHome()
     {
-        return IsConnectivityError(exception)
-            ? "The application couldn't reach the backend."
-            : "Something unexpected happened in the application.";
-    }
-
-    private static bool IsConnectivityError(Exception exception)
-    {
-        if (exception is HttpRequestException or TaskCanceledException or JSException)
-            return true;
-
-        return exception.InnerException is not null && IsConnectivityError(exception.InnerException);
+        _lastLoggedException = null;
+        Navigation.NavigateTo("/");
     }
 }

@@ -110,24 +110,6 @@ public class AddEmployeeViewModel : BaseViewModel
                 ErrorMessage = $"We couldn't add employee '{Employee.Name}'. Please review the details and try again.";
             }
         }
-        catch (HttpRequestException exception)
-        {
-            ErrorMessage = $"We couldn't add employee '{Employee.Name}' right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while adding employee {EmployeeName}", Employee.Name);
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = $"We couldn't add employee '{Employee.Name}' right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while adding employee {EmployeeName}", Employee.Name);
-            }
-            else
-            {
-                ErrorMessage = $"Something went wrong while adding employee '{Employee.Name}'. Please try again.";
-                Logger.LogError(exception, "Unexpected error while adding employee {EmployeeName}", Employee.Name);
-            }
-        }
         finally
         {
             IsLoading = false;
@@ -150,26 +132,12 @@ public class AddEmployeeViewModel : BaseViewModel
 
     private async Task LoadDepartmentsAsync()
     {
-        try
-        {
-            var response = await _httpClient.GetAsync("Department/GetAll");
+        var response = await _httpClient.GetAsync("Department/GetAll");
 
-            if (!response.IsSuccessStatusCode)
-                return;
+        if (!response.IsSuccessStatusCode)
+            return;
 
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
-            Departments = apiResponse?.Data ?? [];
-        }
-        catch (HttpRequestException exception)
-        {
-            Logger.LogWarning(exception, "HTTP request failed while loading departments for Add Employee");
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-                Logger.LogWarning(exception, "Connectivity issue while loading departments for Add Employee");
-            else
-                Logger.LogError(exception, "Unexpected error while loading departments for Add Employee");
-        }
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
+        Departments = apiResponse?.Data ?? [];
     }
 }

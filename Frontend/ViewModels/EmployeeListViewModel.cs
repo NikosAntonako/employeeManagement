@@ -56,6 +56,10 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public int TotalPages { get; set; }
+    public int TotalCount { get; set; }
+    public int ActivePageIndex => Math.Max(CurrentPage - 1, 0);
+    public int FirstItemNumber => Employees is { Count: > 0 } ? ((CurrentPage - 1) * PageSize) + 1 : 0;
+    public int LastItemNumber => Employees is { Count: > 0 } ? FirstItemNumber + Employees.Count - 1 : 0;
 
     // Notification Fields
     public string? SuccessMessage { get; set; }
@@ -123,24 +127,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 ErrorMessage = $"We couldn't delete employee '{employeeName}'. Please try again.";
             }
         }
-        catch (HttpRequestException exception)
-        {
-            ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
-            }
-            else
-            {
-                ErrorMessage = $"Something went wrong while deleting employee '{employeeName}'. Please try again.";
-                Logger.LogError(exception, "Unexpected error while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
-            }
-        }
         finally
         {
             IsLoading = false;
@@ -171,24 +157,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             else
             {
                 ErrorMessage = $"We couldn't delete employee '{employeeName}'. Please try again.";
-            }
-        }
-        catch (HttpRequestException exception)
-        {
-            ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = $"We couldn't delete employee '{employeeName}' right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
-            }
-            else
-            {
-                ErrorMessage = $"Something went wrong while deleting employee '{employeeName}'. Please try again.";
-                Logger.LogError(exception, "Unexpected error while deleting employee {EmployeeId} ({EmployeeName})", id, employeeName);
             }
         }
         finally
@@ -222,36 +190,18 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResult>>();
                 var result = apiResponse?.Data;
                 Employees = result?.Items.ToList() ?? [];
-                TotalPages = result?.TotalPages ?? 1;
+                TotalCount = result?.TotalCount ?? 0;
+                TotalPages = result?.TotalPages ?? 0;
+                CurrentPage = result?.CurrentPage ?? 1;
+                PageSize = result?.PageSize ?? PageSize;
                 ErrorMessage = null;
             }
             else
             {
                 Employees = [];
-                TotalPages = 1;
+                TotalCount = 0;
+                TotalPages = 0;
                 ErrorMessage = "We couldn't load the employee list.";
-            }
-        }
-        catch (HttpRequestException exception)
-        {
-            Employees = [];
-            TotalPages = 1;
-            ErrorMessage = "We couldn't load the employee list right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while loading employees");
-        }
-        catch (Exception exception)
-        {
-            Employees = [];
-            TotalPages = 1;
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = "We couldn't load the employee list right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while loading employees");
-            }
-            else
-            {
-                ErrorMessage = "Something went wrong while loading the employee list. Please try again.";
-                Logger.LogError(exception, "Unexpected error while loading employees");
             }
         }
         finally
@@ -262,7 +212,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
 
     public async Task GoToPage(int page)
     {
-        if (page < 1 || page > TotalPages)
+        if (page < 1 || (TotalPages > 0 && page > TotalPages))
             return;
 
         CurrentPage = page;
@@ -287,20 +237,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         }
         catch (OperationCanceledException)
         {
-        }
-        catch (Exception exception)
-        {
-            if (IsConnectivityError(exception))
-            {
-                ErrorMessage = "We couldn't search the employee list right now. Please try again later.";
-                Logger.LogWarning(exception, "Connectivity issue while searching employees. SearchTerm: {SearchTerm}", SearchTerm);
-            }
-            else
-            {
-                ErrorMessage = "Something went wrong while searching. Please try again.";
-                Logger.LogError(exception, "Unexpected error while searching employees. SearchTerm: {SearchTerm}", SearchTerm);
-            }
-            Employees = [];
         }
     }
 

@@ -22,7 +22,7 @@
 }
 
 .nav-tree ::deep a {
-    color: #d7d7d7;
+    color: #fff;
     border-radius: 4px;
     min-height: 3rem;
     display: flex;

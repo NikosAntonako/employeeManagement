@@ -39,53 +39,40 @@ public class EditEmployeeViewModel : BaseViewModel
 
     public async Task InitializeAsync()
     {
-        try
+        var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
+
+        if (!response.IsSuccessStatusCode)
         {
-            var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                ErrorMessage = "We couldn't load this employee.";
-                return;
-            }
-
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
-            var employeeData = apiResponse?.Data;
-
-            if (employeeData == null)
-            {
-                ErrorMessage = "We couldn't load this employee.";
-                return;
-            }
-
-            Employee = new EmployeeInput
-            {
-                Name = employeeData.Name,
-                Position = employeeData.Position,
-                DepartmentName = employeeData.Department,
-                Salary = employeeData.Salary
-            };
-
-            OriginalEmployee = new EmployeeInput
-            {
-                Name = employeeData.Name,
-                Position = employeeData.Position,
-                DepartmentName = employeeData.Department,
-                Salary = employeeData.Salary
-            };
-
-            await LoadDepartmentsAsync();
+            ErrorMessage = "We couldn't load this employee.";
+            return;
         }
-        catch (HttpRequestException exception)
+
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+        var employeeData = apiResponse?.Data;
+
+        if (employeeData == null)
         {
-            ErrorMessage = "We couldn't load this employee right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while loading employee {EmployeeId}", Id);
+            ErrorMessage = "We couldn't load this employee.";
+            return;
         }
-        catch (Exception exception)
+
+        Employee = new EmployeeInput
         {
-            ErrorMessage = "Something went wrong while loading this employee. Please try again.";
-            Logger.LogError(exception, "Unexpected error while loading employee {EmployeeId}", Id);
-        }
+            Name = employeeData.Name,
+            Position = employeeData.Position,
+            DepartmentName = employeeData.Department,
+            Salary = employeeData.Salary
+        };
+
+        OriginalEmployee = new EmployeeInput
+        {
+            Name = employeeData.Name,
+            Position = employeeData.Position,
+            DepartmentName = employeeData.Department,
+            Salary = employeeData.Salary
+        };
+
+        await LoadDepartmentsAsync();
     }
 
     private async Task LoadDepartmentsAsync()
@@ -169,16 +156,6 @@ public class EditEmployeeViewModel : BaseViewModel
             {
                 ErrorMessage = "We couldn't save the changes for this employee. Please try again.";
             }
-        }
-        catch (HttpRequestException exception)
-        {
-            ErrorMessage = "We couldn't save the changes right now. Please try again later.";
-            Logger.LogWarning(exception, "HTTP request failed while updating employee {EmployeeId}", Id);
-        }
-        catch (Exception exception)
-        {
-            ErrorMessage = "Something went wrong while saving the changes. Please try again.";
-            Logger.LogError(exception, "Unexpected error while updating employee {EmployeeId}", Id);
         }
         finally
         {
