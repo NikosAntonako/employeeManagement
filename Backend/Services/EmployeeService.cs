@@ -7,12 +7,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
+/// <summary>
+/// Provides employee-related business operations and data access.
+/// </summary>
+/// <remarks>
+/// This service supports querying, creating, updating, and deleting employee records,
+/// and maps persistence models to response DTOs returned by the API.
+/// </remarks>
 public class EmployeeService(EmployeeContext context, IConfiguration configuration) : IEmployeeService
 {
     /// <summary>
-    /// Creates a new EmployeeResponseDto that represents the specified employee.
-    /// For Decoupling DRY reasons
+    /// Maps an <see cref="Employee"/> entity to an <see cref="EmployeeResponseDto"/>.
     /// </summary>
+    /// <param name="employee">The employee entity to map.</param>
+    /// <returns>A response DTO containing the employee data.</returns>
     private static EmployeeResponseDto MapToResponse(Employee employee)
     {
         return new EmployeeResponseDto(
@@ -23,7 +31,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
             employee.Salary);
     }
 
-    /// </inheritdoc>
+    /// <inheritdoc />
     public async Task<PagedResultDto> GetAllAsync(EmployeeQueryDto request)
     {
         IQueryable<Employee> query = context.Employees.AsNoTracking();
@@ -95,6 +103,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return new PagedResultDto(items, totalEmployees, totalPages, request.PageNumber, request.PageSize);
     }
 
+    /// <inheritdoc />
     public async Task<EmployeeResponseDto> GetByIdAsync(int id)
     {
         await using var connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
@@ -108,6 +117,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return MapToResponse(employee);
     }
 
+    /// <inheritdoc />
     public async Task<EmployeeResponseDto> CreateAsync(EmployeeDto employee)
     {
         var newEmployee = new Employee
@@ -124,6 +134,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return MapToResponse(newEmployee);
     }
 
+    /// <inheritdoc />
     public async Task<EmployeeResponseDto> UpdateAsync(int id, EmployeeDto updatedEmployee)
     {
         var employee = await context.Employees.FindAsync(id);
@@ -141,6 +152,7 @@ public class EmployeeService(EmployeeContext context, IConfiguration configurati
         return MapToResponse(employee);
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(int id)
     {
         var employee = await context.Employees.FindAsync(id);

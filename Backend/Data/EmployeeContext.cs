@@ -4,15 +4,20 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Data;
 
 /// <summary>
-/// Represents the Entity Framework Core database context for managing employee data.
+/// Represents the Entity Framework Core database context for employee data.
 /// </summary>
-/// <remarks>This context provides access to the Employees table and configures entity properties such as salary
-/// precision. It is intended to be used with dependency injection in ASP.NET Core applications.</remarks>
-/// <param name="options">The options to be used by the DbContext. These typically include configuration information such as the database
-/// provider and connection string.</param>
+/// <param name="options">The options used to configure this context.</param>
 public class EmployeeContext(DbContextOptions<EmployeeContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// Gets or sets the employee records in the database.
+    /// </summary>
     public DbSet<Employee> Employees { get; set; }
+
+    /// <summary>
+    /// Configures the entity model for the database context.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder used to configure entity mappings.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Employee>(entity =>
