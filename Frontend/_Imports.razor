@@ -14,6 +14,9 @@
 @using Frontend.Models
 @using Frontend.ViewModels
 
-@inject NavigationManager navigationManager;
-@inject IHttpClientFactory client;
-@inject IJSRuntime JSRuntime;
+@inject NavigationManager Navigation
+@inject IHttpClientFactory client
+@inject IJSRuntime JSRuntime
+@inject IToastNotificationService ToastService
+@inject IDialogService DialogService
+

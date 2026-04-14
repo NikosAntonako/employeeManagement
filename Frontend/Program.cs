@@ -8,7 +8,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddDevExpressBlazor();
 
-// Configure HttpClient with the Backend
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
 if (string.IsNullOrEmpty(apiBaseUrl))
     throw new InvalidOperationException("ApiBaseUrl is not configured.");

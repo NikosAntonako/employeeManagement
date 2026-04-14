@@ -5,6 +5,14 @@ using System.Net.Http.Json;
 
 namespace Frontend.ViewModels;
 
+/// <summary>
+/// Represents the view model for editing an employee, providing properties and methods to manage employee data, handle
+/// form submission, and interact with related departments.
+/// </summary>
+/// <remarks>This view model is intended for use in UI components that allow editing of employee information. It
+/// manages the retrieval and updating of employee data, department selection or creation, and provides feedback
+/// messages for success or error states. The view model also supports form reset and navigation actions. All
+/// asynchronous operations should be awaited to ensure proper UI updates.</remarks>
 public class EditEmployeeViewModel : BaseViewModel
 {
     public EditEmployeeViewModel(
@@ -32,7 +40,6 @@ public class EditEmployeeViewModel : BaseViewModel
     public EmployeeInput? Employee { get; set; }
     public EmployeeInput? OriginalEmployee { get; set; }
     public IReadOnlyList<DepartmentDto> Departments { get; private set; } = [];
-
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
     public bool IsLoading { get; set; }

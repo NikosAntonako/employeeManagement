@@ -1,6 +1,5 @@
 ﻿@page "/edit/{Id:int}"
 @inject Microsoft.Extensions.Logging.ILogger<EditEmployeeViewModel> editEmployeeLogger
-@using Frontend.Models
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
@@ -102,7 +101,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _viewModel = new EditEmployeeViewModel(this, client, navigationManager, JSRuntime, editEmployeeLogger, Id);
+        _viewModel = new EditEmployeeViewModel(this, client, Navigation, JSRuntime, editEmployeeLogger, Id);
         await _viewModel.InitializeAsync();
 
         if (_viewModel.Employee != null)
@@ -136,6 +135,7 @@ else
     {
         _viewModel?.ResetForm();
         _editContext?.Validate();
+
         StateHasChanged();
     }
 

@@ -7,8 +7,12 @@ namespace Frontend.ViewModels;
 
 /// <summary>
 /// Represents the view model for adding a new employee, providing properties and methods to manage employee input,
-/// submission, and navigation within the add employee workflow.
+/// department selection, and form submission in the add employee workflow.
 /// </summary>
+/// <remarks>This view model is intended for use in UI components that facilitate the creation of new employees.
+/// It manages the state of the employee form, handles department creation if needed, and coordinates navigation and
+/// messaging upon successful or failed operations. The class is not thread-safe and is designed for use within a single
+/// UI context.</remarks>
 public class AddEmployeeViewModel : BaseViewModel
 {
     public AddEmployeeViewModel(
@@ -29,15 +33,12 @@ public class AddEmployeeViewModel : BaseViewModel
     }
 
     private readonly HttpClient _httpClient = default!;
-
     public readonly EmployeeInput Employee = new();
+    public bool IsLoading = false;
 
     public IReadOnlyList<DepartmentDto> Departments { get; private set; } = [];
-
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
-
-    public bool IsLoading = false;
 
     public async Task InitializeAsync()
     {

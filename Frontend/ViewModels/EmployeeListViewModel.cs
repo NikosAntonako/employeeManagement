@@ -30,18 +30,13 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         Logger = logger;
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
         PageTitle = "Employee List";
-
-        // Initialize
         Initialized = true;
     }
 
     private readonly HttpClient _httpClient = default!;
-
-    // 2. Fields and properties
-    public List<EmployeeViewModel>? Employees { get; set; }
-
-    // Search Field
     private string _searchTerm = string.Empty;
+
+    public List<EmployeeViewModel>? Employees { get; set; }
     public string SearchTerm
     {
         get => _searchTerm;
@@ -51,8 +46,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 _searchTerm = value;
         }
     }
-
-    // Pagination Fields
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public int TotalPages { get; set; }
@@ -60,15 +53,10 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     public int ActivePageIndex => Math.Max(CurrentPage - 1, 0);
     public int FirstItemNumber => Employees is { Count: > 0 } ? ((CurrentPage - 1) * PageSize) + 1 : 0;
     public int LastItemNumber => Employees is { Count: > 0 } ? FirstItemNumber + Employees.Count - 1 : 0;
-
-    // Notification Fields
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
-
-    // Loading indicator true = on, false = off
     public bool IsLoading { get; set; } = false;
 
-    // 3. Initialization method
     public async Task InitializeAsync(string? currentUri)
     {
         if (!string.IsNullOrEmpty(currentUri))
@@ -81,7 +69,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         await LoadEmployees();
     }
 
-    // 4. Event handlers and public methods
     public void AddEmployee()
     {
         Navigation.NavigateTo("/add");
@@ -165,7 +152,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         }
     }
 
-    // 5. Private helper methods
     public async Task LoadEmployees()
     {
         IsLoading = true;

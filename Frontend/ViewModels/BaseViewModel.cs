@@ -17,10 +17,7 @@ namespace Frontend.ViewModels
         protected NavigationManager Navigation { get; set; } = default!;
         protected IJSRuntime JS { get; set; } = default!;
         protected ILogger Logger { get; set; } = default!;
-
         public bool Initialized { get; set; }
         public string? PageTitle { get; set; }
-        public bool IsDevice { get; set; } = false;
-
     }
 }

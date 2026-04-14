@@ -1,7 +1,5 @@
 ﻿@page "/"
 @inject Microsoft.Extensions.Logging.ILogger<EmployeeListViewModel> employeeListLogger
-@inject IToastNotificationService ToastService
-@inject IDialogService DialogService
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
@@ -111,8 +109,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _viewModel = new EmployeeListViewModel(this, client, navigationManager, JSRuntime, employeeListLogger);
-        await _viewModel.InitializeAsync(navigationManager.Uri);
+        _viewModel = new EmployeeListViewModel(this, client, Navigation, JSRuntime, employeeListLogger);
+        await _viewModel.InitializeAsync(Navigation.Uri);
         SyncPagerState();
     }
 
@@ -228,6 +226,7 @@ else
             return;
 
         await _viewModel.DeleteEmployeeConfirmedAsync(employee.Id);
+
         SyncPagerState();
         StateHasChanged();
     }

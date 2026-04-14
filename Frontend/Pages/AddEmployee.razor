@@ -1,6 +1,5 @@
 ﻿@page "/add"
 @inject Microsoft.Extensions.Logging.ILogger<AddEmployeeViewModel> addEmployeeLogger
-@using Frontend.Models
 
 @if (_viewModel != null && _viewModel.Initialized)
 {
@@ -90,7 +89,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _viewModel = new AddEmployeeViewModel(this, client, navigationManager, JSRuntime, addEmployeeLogger);
+        _viewModel = new AddEmployeeViewModel(this, client, Navigation, JSRuntime, addEmployeeLogger);
         _editContext = new EditContext(_viewModel.Employee);
         _editContext.OnFieldChanged += (_, __) => ValidateForm();
         _needsValidation = true;

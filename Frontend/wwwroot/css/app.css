@@ -116,17 +116,17 @@ code {
 
 .nav-tree  a,
 .nav-tree  a span {
-    color: #fff !important;
+    color: #fff;
 }
 
 .nav-tree  a:hover,
 .nav-tree  a:hover span {
-    color: #fff !important;
+    color: #fff;
 }
 
 .nav-tree  a.active,
 .nav-tree  a.active span,
 .nav-tree  a[aria-current="page"],
 .nav-tree  a[aria-current="page"] span {
-    color: #fff !important;
+    color: #fff;
 }
