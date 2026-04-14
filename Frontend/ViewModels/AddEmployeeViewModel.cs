@@ -25,7 +25,6 @@ public class AddEmployeeViewModel : BaseViewModel
         Logger = logger;
         _httpClient = HttpClientFactory.CreateClient("BackendApi");
         PageTitle = "Add New Employee";
-
         Initialized = true;
     }
 

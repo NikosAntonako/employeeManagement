@@ -22,12 +22,5 @@ namespace Frontend.ViewModels
         public string? PageTitle { get; set; }
         public bool IsDevice { get; set; } = false;
 
-        protected static bool IsConnectivityError(Exception exception)
-        {
-            if (exception is HttpRequestException or TaskCanceledException or JSException)
-                return true;
-
-            return exception.InnerException is not null && IsConnectivityError(exception.InnerException);
-        }
     }
 }
