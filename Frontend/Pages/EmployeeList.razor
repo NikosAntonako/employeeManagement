@@ -74,7 +74,7 @@
                             <DxButton Text="Delete"
                                       RenderStyle="ButtonRenderStyle.Danger"
                                       RenderStyleMode="ButtonRenderStyleMode.Outline"
-                                      Click="@(() => ConfirmDeleteAsync(employee))" />
+                                      Click="@(() => ConfirmDelete(employee))" />
                         </div>
                     </CellDisplayTemplate>
                 </DxGridDataColumn>
@@ -171,7 +171,7 @@ else
                 return;
 
             _selectedPageSize = value;
-            _ = ApplyPageSizeAsync(value);
+            _ = ApplyPageSize(value);
         }
     }
 
@@ -184,21 +184,21 @@ else
                 return;
 
             _pagerActivePageIndex = value;
-            _ = LoadSelectedPageAsync(value);
+            _ = LoadSelectedPage(value);
         }
     }
 
-    private async Task ApplyPageSizeAsync(int newSize)
+    private async Task ApplyPageSize(int newSize)
     {
         if (_viewModel is null)
             return;
 
-        await _viewModel.SetPageSizeAsync(newSize);
+        await _viewModel.SetPageSize(newSize);
         SyncPagerState();
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task LoadSelectedPageAsync(int pageIndex)
+    private async Task LoadSelectedPage(int pageIndex)
     {
         if (_viewModel is null)
             return;
@@ -208,7 +208,7 @@ else
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task ConfirmDeleteAsync(EmployeeViewModel employee)
+    private async Task ConfirmDelete(EmployeeViewModel employee)
     {
         if (_viewModel is null)
             return;
@@ -225,7 +225,7 @@ else
         if (!confirmed)
             return;
 
-        await _viewModel.DeleteEmployeeConfirmedAsync(employee.Id);
+        await _viewModel.DeleteEmployee(employee.Id);
 
         SyncPagerState();
         StateHasChanged();

@@ -34,6 +34,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     }
 
     private readonly HttpClient _httpClient = default!;
+    private CancellationTokenSource? _searchCancellationTokenSource;
     private string _searchTerm = string.Empty;
 
     public List<EmployeeViewModel>? Employees { get; set; }
@@ -80,47 +81,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     }
 
     public async Task DeleteEmployee(int id)
-    {
-        // Clear previous notifications
-        SuccessMessage = ErrorMessage = null;
-
-        var employee = Employees?.FirstOrDefault(employee => employee.Id == id);
-        string employeeName = employee?.Name ?? $"ID {id}";
-
-        // Show confirmation dialog
-        bool confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Are you sure you want to delete employee '{employeeName}' with id {id}?");
-
-        if (!confirmed)
-            return;
-
-        // Turn Loading on (after confirmation)
-        IsLoading = true;
-
-        try
-        {
-            var response = await _httpClient.DeleteAsync($"Employee/Delete/{id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                if (employee != null && Employees?.Count == 1 && CurrentPage > 1)
-                    CurrentPage--;
-
-                await LoadEmployees();
-                SuccessMessage = $"Employee '{employeeName}' was deleted successfully.";
-            }
-            else
-            {
-                ErrorMessage = $"We couldn't delete employee '{employeeName}'. Please try again.";
-            }
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    public async Task DeleteEmployeeConfirmedAsync(int id)
     {
         SuccessMessage = ErrorMessage = null;
 
@@ -205,7 +165,6 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         await LoadEmployees();
     }
 
-    private CancellationTokenSource? _searchCancellationTokenSource;
 
     public async Task OnSearchInput(ChangeEventArgs e)
     {
@@ -226,7 +185,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         }
     }
 
-    public async Task SetPageSizeAsync(int newSize)
+    public async Task SetPageSize(int newSize)
     {
         if (PageSize != newSize)
         {
