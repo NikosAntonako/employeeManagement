@@ -1,4 +1,4 @@
-namespace Backend.Dtos;
+namespace EmployeeManagement.Shared;
 
 /// <summary>
 /// Represents a paged result containing a collection of employee responses and the total number of pages available.

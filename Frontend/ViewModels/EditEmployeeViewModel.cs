@@ -1,6 +1,7 @@
-﻿using Frontend.Models;
+﻿using EmployeeManagement.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Net;
 using System.Net.Http.Json;
 
 namespace Frontend.ViewModels;
@@ -10,8 +11,9 @@ namespace Frontend.ViewModels;
 /// form submission, and interact with related departments.
 /// </summary>
 /// <remarks>This view model is intended for use in UI components that allow editing of employee information. It
-/// manages the retrieval and updating of employee data, department selection or creation, and provides feedback
-/// messages for success or error states. The view model also supports form reset and navigation actions. All
+/// manages the retrieval and updating of employee data, department suggestions, and provides feedback
+/// messages for success or error states. The view model also supports form reset and navigation actions. ALw
+/// ll
 /// asynchronous operations should be awaited to ensure proper UI updates.</remarks>
 public class EditEmployeeViewModel : BaseViewModel
 {
@@ -37,49 +39,66 @@ public class EditEmployeeViewModel : BaseViewModel
     private readonly HttpClient _httpClient = default!;
 
     public int Id { get; set; }
-    public EmployeeInput? Employee { get; set; }
-    public EmployeeInput? OriginalEmployee { get; set; }
+    public EmployeeDto? Employee { get; set; }
+    public EmployeeDto? OriginalEmployee { get; set; }
     public IReadOnlyList<DepartmentDto> Departments { get; private set; } = [];
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
+    public string? PageErrorMessage { get; private set; }
+    public bool IsEmployeeNotFound { get; private set; }
     public bool IsLoading { get; set; }
 
     public async Task InitializeAsync()
     {
-        var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
+        IsLoading = true;
+        IsEmployeeNotFound = false;
+        ErrorMessage = null;
+        PageErrorMessage = null;
 
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            ErrorMessage = "We couldn't load this employee.";
-            return;
+            var response = await _httpClient.GetAsync($"Employee/GetById/{Id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                IsEmployeeNotFound = response.StatusCode == HttpStatusCode.NotFound;
+                ErrorMessage = await GetErrorMessageAsync(response, "We couldn't load this employee.");
+                PageErrorMessage = ErrorMessage;
+                return;
+            }
+
+            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeResponseDto>>();
+            var employeeData = apiResponse?.Data;
+
+            if (employeeData == null)
+            {
+                ErrorMessage = "We couldn't load this employee.";
+                PageErrorMessage = ErrorMessage;
+                return;
+            }
+
+            Employee = new EmployeeDto
+            {
+                Name = employeeData.Name,
+                Position = employeeData.Position,
+                DepartmentName = employeeData.Department,
+                Salary = employeeData.Salary
+            };
+
+            OriginalEmployee = new EmployeeDto
+            {
+                Name = employeeData.Name,
+                Position = employeeData.Position,
+                DepartmentName = employeeData.Department,
+                Salary = employeeData.Salary
+            };
+
+            await LoadDepartmentsAsync();
         }
-
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
-        var employeeData = apiResponse?.Data;
-
-        if (employeeData == null)
+        finally
         {
-            ErrorMessage = "We couldn't load this employee.";
-            return;
+            IsLoading = false;
         }
-
-        Employee = new EmployeeInput
-        {
-            Name = employeeData.Name,
-            Position = employeeData.Position,
-            DepartmentName = employeeData.Department,
-            Salary = employeeData.Salary
-        };
-
-        OriginalEmployee = new EmployeeInput
-        {
-            Name = employeeData.Name,
-            Position = employeeData.Position,
-            DepartmentName = employeeData.Department,
-            Salary = employeeData.Salary
-        };
-
-        await LoadDepartmentsAsync();
     }
 
     private async Task LoadDepartmentsAsync()
@@ -89,11 +108,14 @@ public class EditEmployeeViewModel : BaseViewModel
         if (!response.IsSuccessStatusCode)
         {
             Departments = [];
+            ErrorMessage = await GetErrorMessageAsync(response, "We couldn't load departments.");
             return;
         }
 
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
-        Departments = apiResponse?.Data ?? [];
+        Departments = apiResponse?.Data?
+            .OrderBy(department => department.Name)
+            .ToArray() ?? [];
     }
 
     public async Task HandleValidSubmit()
@@ -106,62 +128,24 @@ public class EditEmployeeViewModel : BaseViewModel
             if (Employee == null)
                 return;
 
+            Employee.Name = Employee.Name.Trim();
+            Employee.Position = Employee.Position.Trim();
             Employee.DepartmentName = Employee.DepartmentName.Trim();
-
-            var existingDepartment = Departments.FirstOrDefault(department =>
-                string.Equals(department.Name, Employee.DepartmentName, StringComparison.OrdinalIgnoreCase));
-
-            if (existingDepartment != null)
-            {
-                Employee.DepartmentId = existingDepartment.Id;
-            }
-            else
-            {
-                var createDepartmentResponse = await _httpClient.PostAsJsonAsync(
-                    "Department/Create",
-                    new CreateDepartmentInput
-                    {
-                        Name = Employee.DepartmentName.Trim()
-                    });
-
-                if (!createDepartmentResponse.IsSuccessStatusCode)
-                {
-                    ErrorMessage = "We couldn't create the department. Please try again.";
-                    return;
-                }
-
-                var createdDepartmentApiResponse =
-                    await createDepartmentResponse.Content.ReadFromJsonAsync<ApiResponse<DepartmentDto>>();
-
-                var createdDepartment = createdDepartmentApiResponse?.Data;
-
-                if (createdDepartment == null)
-                {
-                    ErrorMessage = "We couldn't create the department. Please try again.";
-                    return;
-                }
-
-                Employee.DepartmentId = createdDepartment.Id;
-                Employee.DepartmentName = createdDepartment.Name;
-                Departments = Departments
-                    .Append(createdDepartment)
-                    .DistinctBy(department => department.Name, StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(department => department.Name)
-                    .ToArray();
-            }
 
             var response = await _httpClient.PutAsJsonAsync($"Employee/Update/{Id}", Employee);
 
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeResponseDto>>();
                 var updatedEmployee = apiResponse?.Data;
-                SuccessMessage = $"Employee '{updatedEmployee?.Name ?? OriginalEmployee?.Name}' was updated successfully.";
+                SuccessMessage = $"Employee '{updatedEmployee?.Name ?? OriginalEmployee?.Name ?? Employee.Name}' was updated successfully.";
                 Navigation.NavigateTo($"/?success={Uri.EscapeDataString(SuccessMessage)}");
             }
             else
             {
-                ErrorMessage = "We couldn't save the changes for this employee. Please try again.";
+                ErrorMessage = await GetErrorMessageAsync(
+                    response,
+                    "We couldn't save the changes for this employee. Please try again.");
             }
         }
         finally
@@ -177,7 +161,6 @@ public class EditEmployeeViewModel : BaseViewModel
             Employee.Name = OriginalEmployee.Name;
             Employee.Position = OriginalEmployee.Position;
             Employee.DepartmentName = OriginalEmployee.DepartmentName;
-            Employee.DepartmentId = OriginalEmployee.DepartmentId;
             Employee.Salary = OriginalEmployee.Salary;
         }
     }

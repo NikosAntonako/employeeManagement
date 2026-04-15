@@ -3,6 +3,7 @@ using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(EmployeeContext))]
-    partial class EmployeeContextModelSnapshot : ModelSnapshot
+    [Migration("20260414124956_EnforceUniqueDepartmentName")]
+    partial class EnforceUniqueDepartmentName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,10 +42,7 @@ namespace Backend.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Departments", t =>
-                        {
-                            t.HasCheckConstraint("CK_Departments_Name_NotEmpty", "LEN(LTRIM(RTRIM([Name]))) > 0");
-                        });
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("Backend.Models.Employee", b =>
@@ -74,14 +74,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Employees", t =>
-                        {
-                            t.HasCheckConstraint("CK_Employees_Name_NotEmpty", "LEN(LTRIM(RTRIM([Name]))) > 0");
-
-                            t.HasCheckConstraint("CK_Employees_Position_NotEmpty", "LEN(LTRIM(RTRIM([Position]))) > 0");
-
-                            t.HasCheckConstraint("CK_Employees_Salary_NonNegative", "[Salary] IS NULL OR [Salary] >= 0");
-                        });
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("Backend.Models.Employee", b =>

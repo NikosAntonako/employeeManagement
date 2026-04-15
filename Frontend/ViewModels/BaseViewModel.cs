@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using EmployeeManagement.Shared;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Frontend.ViewModels
 {
@@ -19,5 +22,21 @@ namespace Frontend.ViewModels
         protected ILogger Logger { get; set; } = default!;
         public bool Initialized { get; set; }
         public string? PageTitle { get; set; }
+
+        protected async Task<string> GetErrorMessageAsync(HttpResponseMessage response, string fallbackMessage)
+        {
+            try
+            {
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+
+                return string.IsNullOrWhiteSpace(apiResponse?.Message)
+                    ? fallbackMessage
+                    : $"{apiResponse.Message} {fallbackMessage}";
+            }
+            catch (Exception exception) when (exception is JsonException or NotSupportedException)
+            {
+                return fallbackMessage;
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Backend.Dtos;
+﻿using EmployeeManagement.Shared;
 
 namespace Backend.Services;
 

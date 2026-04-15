@@ -1,4 +1,4 @@
-﻿using Backend.Common;
+﻿using EmployeeManagement.Shared;
 
 namespace Backend.Middleware;
 
@@ -41,7 +41,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
                 : exception.Message;
 
             await context.Response.WriteAsJsonAsync(
-                new ApiResponse<object>(statusCode, detail: detail));
+                new ApiResponse<object>(statusCode, Detail: detail));
         }
     }
 }

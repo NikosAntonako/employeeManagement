@@ -1,4 +1,4 @@
-﻿namespace Backend.Dtos;
+﻿namespace EmployeeManagement.Shared;
 
 /// <summary>
 /// Represents a department returned by the API.

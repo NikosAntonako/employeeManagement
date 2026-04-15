@@ -1,4 +1,5 @@
 ﻿@page "/add"
+@implements IDisposable
 @inject Microsoft.Extensions.Logging.ILogger<AddEmployeeViewModel> addEmployeeLogger
 
 @if (_viewModel != null && _viewModel.Initialized)
@@ -6,121 +7,192 @@
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Add Employee</h3>
 
-    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
-    {
-        <div class="alert alert-danger" role="alert">
-            @_viewModel.ErrorMessage
-        </div>
-    }
+    <div class="position-relative" id="add-employee-content">
+        <DxLoadingPanel Visible="@_viewModel.IsLoading"
+                        IsContentBlocked="true"
+                        ApplyBackgroundShading="true"
+                        Text="Loading...">
+            <EditForm EditContext="_editContext"
+                      OnValidSubmit="HandleValidSubmit"
+                      OnInvalidSubmit="HandleInvalidSubmit"
+                      Context="editFormContext">
+                <DataAnnotationsValidator />
 
-    <EditForm EditContext="_editContext" OnValidSubmit="_viewModel.HandleValidSubmit" Context="editFormContext">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+                @if (_hasSubmitted)
+                {
+                    <ValidationSummary />
+                }
 
-        <DxFormLayout CaptionPosition="@CaptionPosition.Vertical">
-            <DxFormLayoutItem Caption="Name">
-                <DxTextBox @bind-Text="_viewModel.Employee.Name"
-                           BindValueMode="@BindValueMode.OnDelayedInput"
-                           NullText="Enter employee name" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Name)" />
-            </DxFormLayoutItem>
+                <DxFormLayout CaptionPosition="@CaptionPosition.Vertical">
+                    <DxFormLayoutItem Caption="Name">
+                        <DxTextBox @bind-Text="_viewModel.Employee.Name"
+                                   InputId="employee-name"
+                                   BindValueMode="@BindValueMode.OnDelayedInput"
+                                   NullText="Enter employee name" />
+                        @if (_hasSubmitted)
+                        {
+                            <ValidationMessage For="@(() => _viewModel.Employee.Name)" />
+                        }
+                    </DxFormLayoutItem>
 
-            <DxFormLayoutItem Caption="Position">
-                <DxTextBox @bind-Text="_viewModel.Employee.Position"
-                           BindValueMode="@BindValueMode.OnDelayedInput"
-                           NullText="Enter employee position" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Position)" />
-            </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="Position">
+                        <DxTextBox @bind-Text="_viewModel.Employee.Position"
+                                   InputId="employee-position"
+                                   BindValueMode="@BindValueMode.OnDelayedInput"
+                                   NullText="Enter employee position" />
+                        @if (_hasSubmitted)
+                        {
+                            <ValidationMessage For="@(() => _viewModel.Employee.Position)" />
+                        }
+                    </DxFormLayoutItem>
 
-            <DxFormLayoutItem Caption="Department">
-                <DxComboBox TData="DepartmentDto"
-                            TValue="string"
-                            Data="@_viewModel.Departments"
-                            ValueFieldName="Name"
-                            TextFieldName="Name"
-                            @bind-Text="_viewModel.Employee.DepartmentName"
-                            BindValueMode="@BindValueMode.OnInput"
-                            AllowUserInput="true"
-                            NullText="Select or enter a department"
-                            ClearButtonDisplayMode="@DataEditorClearButtonDisplayMode.Auto" />
-                <ValidationMessage For="@(() => _viewModel.Employee.DepartmentName)" />
-            </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="Department">
+                        <DxComboBox TData="DepartmentDto"
+                                    TValue="string"
+                                    InputId="employee-department"
+                                    Data="@_viewModel.Departments"
+                                    ValueFieldName="Name"
+                                    TextFieldName="Name"
+                                    @bind-Text="_viewModel.Employee.DepartmentName"
+                                    BindValueMode="@BindValueMode.OnInput"
+                                    AllowUserInput="true"
+                                    NullText="Select or enter a department"
+                                    ClearButtonDisplayMode="@DataEditorClearButtonDisplayMode.Auto" />
+                        @if (_hasSubmitted)
+                        {
+                            <ValidationMessage For="@(() => _viewModel.Employee.DepartmentName)" />
+                        }
+                    </DxFormLayoutItem>
 
-            <DxFormLayoutItem Caption="Salary">
-                <DxSpinEdit @bind-Value="_viewModel.Employee.Salary"
-                            BindValueMode="@BindValueMode.OnDelayedInput"
-                            NullText="Enter salary"
-                            MinValue="0m"
-                            Increment="100m" />
-                <ValidationMessage For="@(() => _viewModel.Employee.Salary)" />
-            </DxFormLayoutItem>
+                    <DxFormLayoutItem Caption="Salary">
+                        <DxSpinEdit @bind-Value="_viewModel.Employee.Salary"
+                                    InputId="employee-salary"
+                                    BindValueMode="@BindValueMode.OnDelayedInput"
+                                    NullText="Enter salary"
+                                    MinValue="0m"
+                                    Increment="100m" />
+                        @if (_hasSubmitted)
+                        {
+                            <ValidationMessage For="@(() => _viewModel.Employee.Salary)" />
+                        }
+                    </DxFormLayoutItem>
 
-            <DxFormLayoutItem ColSpanMd="12">
-                <div class="d-flex gap-2 flex-wrap mt-3">
-                    <DxButton Text="Add Employee"
-                              RenderStyle="@ButtonRenderStyle.Primary"
-                              Enabled="@_isFormValid"
-                              SubmitFormOnClick="true" />
+                    <DxFormLayoutItem ColSpanMd="12">
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <DxButton Text="Add Employee"
+                                      RenderStyle="@ButtonRenderStyle.Primary"
+                                      Enabled="@((!_hasSubmitted || _isFormValid) && !_viewModel.IsLoading)"
+                                      SubmitFormOnClick="true" />
 
-                    <DxButton Text="Go Back"
-                              RenderStyle="@ButtonRenderStyle.Secondary"
-                              Click="_viewModel.GoBack" />
+                            <DxButton Text="Go Back"
+                                      RenderStyle="@ButtonRenderStyle.Secondary"
+                                      Enabled="@(!_viewModel.IsLoading)"
+                                      Click="_viewModel.GoBack" />
 
-                    <DxButton Text="Reset"
-                              RenderStyle="@ButtonRenderStyle.Warning"
-                              Click="ResetForm" />
-                </div>
-            </DxFormLayoutItem>
-        </DxFormLayout>
-    </EditForm>
+                            <DxButton Text="Reset"
+                                      RenderStyle="@ButtonRenderStyle.Warning"
+                                      Enabled="@(!_viewModel.IsLoading)"
+                                      Click="ResetForm" />
+                        </div>
+                    </DxFormLayoutItem>
+                </DxFormLayout>
+            </EditForm>
+        </DxLoadingPanel>
+    </div>
 }
 else
 {
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="position-relative" style="min-height: 12rem;">
+        <DxLoadingPanel Visible="true"
+                        IsContentBlocked="true"
+                        ApplyBackgroundShading="false"
+                        Text="Loading..." />
     </div>
 }
 
 @code {
     private AddEmployeeViewModel? _viewModel;
     private EditContext? _editContext;
-    private bool _isFormValid;
-    private bool _needsValidation;
+    private bool _isFormValid = true;
+    private bool _hasSubmitted;
 
     protected override async Task OnInitializedAsync()
     {
         _viewModel = new AddEmployeeViewModel(this, client, Navigation, JSRuntime, addEmployeeLogger);
-        _editContext = new EditContext(_viewModel.Employee);
-        _editContext.OnFieldChanged += (_, __) => ValidateForm();
-        _needsValidation = true;
+        CreateEditContext();
 
         await _viewModel.InitializeAsync();
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _needsValidation)
+        if (_viewModel != null && !string.IsNullOrWhiteSpace(_viewModel.ErrorMessage))
         {
-            _needsValidation = false;
-            ValidateForm();
-        }
+            ToastService.ShowToast(new ToastOptions
+            {
+                Title = "Error",
+                Text = _viewModel.ErrorMessage,
+                RenderStyle = ToastRenderStyle.Danger,
+                ThemeMode = ToastThemeMode.Pastel
+            });
 
-        return Task.CompletedTask;
+            _viewModel.ErrorMessage = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void CreateEditContext()
+    {
+        if (_editContext is not null)
+            _editContext.OnFieldChanged -= HandleFieldChanged;
+
+        _editContext = new EditContext(_viewModel!.Employee);
+        _editContext.OnFieldChanged += HandleFieldChanged;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        _hasSubmitted = true;
+        _isFormValid = true;
+
+        if (_viewModel is not null)
+            await _viewModel.HandleValidSubmit();
+    }
+
+    private void HandleInvalidSubmit(EditContext editContext)
+    {
+        _hasSubmitted = true;
+        _isFormValid = false;
+        StateHasChanged();
+    }
+
+    private void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
+    {
+        if (_hasSubmitted)
+            ValidateForm();
     }
 
     private void ValidateForm()
     {
         if (_editContext is not null)
             _isFormValid = _editContext.Validate();
-
-        StateHasChanged();
     }
 
     private void ResetForm()
     {
-        _viewModel?.ResetForm();
-        _editContext?.Validate();
+        if (_viewModel is null)
+            return;
+
+        _viewModel.ResetForm();
+        _hasSubmitted = false;
+        _isFormValid = true;
+        CreateEditContext();
         StateHasChanged();
     }
 
+    public void Dispose()
+    {
+        if (_editContext is not null)
+            _editContext.OnFieldChanged -= HandleFieldChanged;
+    }
 }

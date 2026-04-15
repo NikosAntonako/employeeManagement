@@ -1,4 +1,4 @@
-namespace Backend.Dtos;
+﻿namespace EmployeeManagement.Shared;
 
 /// <summary>
 /// Represents the data transfer object containing employee details for API responses.

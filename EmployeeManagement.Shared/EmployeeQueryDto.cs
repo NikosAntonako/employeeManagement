@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Backend.Dtos;
+namespace EmployeeManagement.Shared;
 
 /// <summary>
-/// Represents the set of query parameters used to filter, sort, and paginate employee search results.
+/// Represents a data transfer object containing basic information about an employee, including name, position,
+/// department, and salary.
 /// </summary>
 public sealed record EmployeeQueryDto
 {

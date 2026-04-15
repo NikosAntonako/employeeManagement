@@ -1,4 +1,4 @@
-﻿using Frontend.Models;
+﻿using EmployeeManagement.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
@@ -12,9 +12,9 @@ namespace Frontend.ViewModels;
 /// </summary>
 /// <remarks>This view model is intended for use in UI components that display employee data with support for
 /// pagination, searching, and user notifications. It manages the loading state, handles navigation for add and edit
-/// actions, and provides feedback messages for user actions. The class implements IDisposable to release resources
-/// associated with search cancellation tokens. Thread safety is not guaranteed; use from a single UI thread.</remarks>
-public class EmployeeListViewModel : BaseViewModel, IDisposable
+/// actions, and provides feedback messages for user actions. Thread safety is not guaranteed; use from a single UI
+/// thread.</remarks>
+public class EmployeeListViewModel : BaseViewModel
 {
     public EmployeeListViewModel(
         ComponentBase component,
@@ -34,10 +34,10 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     }
 
     private readonly HttpClient _httpClient = default!;
-    private CancellationTokenSource? _searchCancellationTokenSource;
     private string _searchTerm = string.Empty;
 
-    public List<EmployeeViewModel>? Employees { get; set; }
+    public List<EmployeeResponseDto> Employees { get; set; } = [];
+
     public string SearchTerm
     {
         get => _searchTerm;
@@ -47,16 +47,23 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
                 _searchTerm = value;
         }
     }
+
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public int TotalPages { get; set; }
     public int TotalCount { get; set; }
-    public int ActivePageIndex => Math.Max(CurrentPage - 1, 0);
-    public int FirstItemNumber => Employees is { Count: > 0 } ? ((CurrentPage - 1) * PageSize) + 1 : 0;
-    public int LastItemNumber => Employees is { Count: > 0 } ? FirstItemNumber + Employees.Count - 1 : 0;
+
+    public int ActivePageIndex
+    {
+        get => Math.Max(CurrentPage - 1, 0);
+        set => CurrentPage = value + 1;
+    }
+
+    public int FirstItemNumber => Employees.Count == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
+    public int LastItemNumber => Employees.Count == 0 ? 0 : FirstItemNumber + Employees.Count - 1;
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
-    public bool IsLoading { get; set; } = false;
+    public bool IsLoading { get; set; }
 
     public async Task InitializeAsync(string? currentUri)
     {
@@ -84,7 +91,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
     {
         SuccessMessage = ErrorMessage = null;
 
-        var employee = Employees?.FirstOrDefault(employee => employee.Id == id);
+        var employee = Employees.FirstOrDefault(employee => employee.Id == id);
         string employeeName = employee?.Name ?? $"ID {id}";
 
         IsLoading = true;
@@ -95,7 +102,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
 
             if (response.IsSuccessStatusCode)
             {
-                if (employee != null && Employees?.Count == 1 && CurrentPage > 1)
+                if (employee is not null && Employees.Count == 1 && CurrentPage > 1)
                     CurrentPage--;
 
                 await LoadEmployees();
@@ -133,7 +140,7 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
 
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResult>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResultDto>>();
                 var result = apiResponse?.Data;
                 Employees = result?.Items.ToList() ?? [];
                 TotalCount = result?.TotalCount ?? 0;
@@ -165,24 +172,11 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
         await LoadEmployees();
     }
 
-
     public async Task OnSearchInput(ChangeEventArgs e)
     {
         SearchTerm = e.Value?.ToString() ?? string.Empty;
-        CurrentPage = 1; // Reset to first page on search
-
-        _searchCancellationTokenSource?.Cancel();
-        _searchCancellationTokenSource?.Dispose();
-        _searchCancellationTokenSource = new();
-
-        try
-        {
-            await Task.Delay(250, _searchCancellationTokenSource.Token);
-            await LoadEmployees();
-        }
-        catch (OperationCanceledException)
-        {
-        }
+        CurrentPage = 1;
+        await LoadEmployees();
     }
 
     public async Task SetPageSize(int newSize)
@@ -193,11 +187,5 @@ public class EmployeeListViewModel : BaseViewModel, IDisposable
             CurrentPage = 1;
             await LoadEmployees();
         }
-    }
-
-    public void Dispose()
-    {
-        _searchCancellationTokenSource?.Cancel();
-        _searchCancellationTokenSource?.Dispose();
     }
 }

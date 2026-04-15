@@ -7,7 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<EmployeeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.SuppressAsyncSuffixInActionNames = false;
+});
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -15,6 +18,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IDepartmentLifecycle, DepartmentLifecycle>();
 
 var allowedOrigins = builder.Configuration
     .GetSection("AllowedOrigins")
@@ -44,8 +48,20 @@ if (app.Environment.IsDevelopment())
 // Create a scoped service provider for startup tasks.
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<EmployeeContext>();
-    dbContext.Database.Migrate();
+
+    try
+    {
+        logger.LogInformation("Applying database migrations...");
+        dbContext.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database migration failed.");
+        throw;
+    }
 }
 
 app.UseMiddleware<Backend.Middleware.LoggingMiddleware>();

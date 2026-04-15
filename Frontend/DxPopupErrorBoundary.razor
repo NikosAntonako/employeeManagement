@@ -32,11 +32,11 @@
 </ErrorBoundary>
 
 @code {
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
     private ErrorBoundary? _errorBoundary;
     private Exception? _lastLoggedException;
+    
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     private void LogException(Exception exception)
     {

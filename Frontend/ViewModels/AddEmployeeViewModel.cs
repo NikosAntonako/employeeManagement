@@ -1,4 +1,4 @@
-﻿using Frontend.Models;
+﻿using EmployeeManagement.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -10,7 +10,7 @@ namespace Frontend.ViewModels;
 /// department selection, and form submission in the add employee workflow.
 /// </summary>
 /// <remarks>This view model is intended for use in UI components that facilitate the creation of new employees.
-/// It manages the state of the employee form, handles department creation if needed, and coordinates navigation and
+/// It manages the state of the employee form, handles department suggestions, and coordinates navigation and
 /// messaging upon successful or failed operations. The class is not thread-safe and is designed for use within a single
 /// UI context.</remarks>
 public class AddEmployeeViewModel : BaseViewModel
@@ -33,16 +33,46 @@ public class AddEmployeeViewModel : BaseViewModel
     }
 
     private readonly HttpClient _httpClient = default!;
-    public readonly EmployeeInput Employee = new();
-    public bool IsLoading = false;
+    public readonly EmployeeDto Employee = new()
+    {
+        Name = string.Empty,
+        Position = string.Empty,
+        DepartmentName = string.Empty
+    };
 
     public IReadOnlyList<DepartmentDto> Departments { get; private set; } = [];
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
+    public bool IsLoading { get; set; }
 
     public async Task InitializeAsync()
     {
-        await LoadDepartmentsAsync();
+        IsLoading = true;
+
+        try
+        {
+            await LoadDepartmentsAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+    private async Task LoadDepartmentsAsync()
+    {
+        var response = await _httpClient.GetAsync("Department/GetAll");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Departments = [];
+            ErrorMessage = await GetErrorMessageAsync(response, "We couldn't load departments.");
+            return;
+        }
+
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
+        Departments = apiResponse?.Data?
+            .OrderBy(department => department.Name)
+            .ToArray() ?? [];
     }
 
     public async Task HandleValidSubmit()
@@ -52,62 +82,24 @@ public class AddEmployeeViewModel : BaseViewModel
 
         try
         {
+            Employee.Name = Employee.Name.Trim();
+            Employee.Position = Employee.Position.Trim();
             Employee.DepartmentName = Employee.DepartmentName.Trim();
-
-            var existingDepartment = Departments.FirstOrDefault(department =>
-                string.Equals(department.Name, Employee.DepartmentName, StringComparison.OrdinalIgnoreCase));
-
-            if (existingDepartment != null)
-            {
-                Employee.DepartmentId = existingDepartment.Id;
-            }
-            else
-            {
-                var createDepartmentResponse = await _httpClient.PostAsJsonAsync(
-                    "Department/Create",
-                    new CreateDepartmentInput
-                    {
-                        Name = Employee.DepartmentName.Trim()
-                    });
-
-                if (!createDepartmentResponse.IsSuccessStatusCode)
-                {
-                    ErrorMessage = $"We couldn't create department '{Employee.DepartmentName}'.";
-                    return;
-                }
-
-                var createdDepartmentApiResponse =
-                    await createDepartmentResponse.Content.ReadFromJsonAsync<ApiResponse<DepartmentDto>>();
-
-                var createdDepartment = createdDepartmentApiResponse?.Data;
-
-                if (createdDepartment == null)
-                {
-                    ErrorMessage = $"We couldn't create department '{Employee.DepartmentName}'.";
-                    return;
-                }
-
-                Employee.DepartmentId = createdDepartment.Id;
-                Employee.DepartmentName = createdDepartment.Name;
-                Departments = Departments
-                    .Append(createdDepartment)
-                    .DistinctBy(department => department.Name, StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(department => department.Name)
-                    .ToArray();
-            }
 
             var response = await _httpClient.PostAsJsonAsync("Employee/Create", Employee);
 
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeViewModel>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<EmployeeResponseDto>>();
                 var createdEmployee = apiResponse?.Data;
                 SuccessMessage = $"Employee '{createdEmployee?.Name ?? Employee.Name}' was added successfully.";
                 Navigation.NavigateTo($"/?success={Uri.EscapeDataString(SuccessMessage)}");
             }
             else
             {
-                ErrorMessage = $"We couldn't add employee '{Employee.Name}'. Please review the details and try again.";
+                ErrorMessage = await GetErrorMessageAsync(
+                    response,
+                    $"We couldn't add employee '{Employee.Name}'. Please review the details and try again.");
             }
         }
         finally
@@ -116,28 +108,15 @@ public class AddEmployeeViewModel : BaseViewModel
         }
     }
 
-    public void GoBack()
-    {
-        Navigation.NavigateTo("/");
-    }
-
     public void ResetForm()
     {
         Employee.Name = string.Empty;
         Employee.Position = string.Empty;
         Employee.DepartmentName = string.Empty;
-        Employee.DepartmentId = 0;
         Employee.Salary = null;
     }
-
-    private async Task LoadDepartmentsAsync()
+    public void GoBack()
     {
-        var response = await _httpClient.GetAsync("Department/GetAll");
-
-        if (!response.IsSuccessStatusCode)
-            return;
-
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<DepartmentDto>>>();
-        Departments = apiResponse?.Data ?? [];
+        Navigation.NavigateTo("/");
     }
 }

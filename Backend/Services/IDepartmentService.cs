@@ -1,4 +1,4 @@
-﻿using Backend.Dtos;
+﻿using EmployeeManagement.Shared;
 
 namespace Backend.Services;
 
@@ -12,11 +12,4 @@ public interface IDepartmentService
     /// </summary>
     /// <returns>The department list.</returns>
     Task<IReadOnlyList<DepartmentDto>> GetAllAsync();
-
-    /// <summary>
-    /// Creates a new department.
-    /// </summary>
-    /// <param name="department">The department data to create.</param>
-    /// <returns>The created department.</returns>
-    Task<DepartmentDto> CreateAsync(CreateDepartmentDto department);
 }

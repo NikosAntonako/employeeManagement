@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Frontend.Models;
+namespace EmployeeManagement.Shared;
 
 /// <summary>
 /// Represents the data required to create a department.
 /// </summary>
-public sealed record CreateDepartmentInput
+public sealed record CreateDepartmentDto
 {
     [Required(ErrorMessage = "Department name is required.")]
     [MinLength(1, ErrorMessage = "Department name cannot be empty.")]

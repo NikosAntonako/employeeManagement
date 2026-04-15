@@ -6,112 +6,151 @@
     <PageTitle>@_viewModel.PageTitle</PageTitle>
     <h3>Employee List</h3>
 
-    <div class="mb-3">
-        <DxTextBox CssClass="w-100"
-                   NullText="Search by Name, Position or Department"
-                   Text="@_viewModel.SearchTerm"
-                   TextChanged="OnSearchTextChanged" />
+    <div class="position-relative" id="employee-list-content">
+        <div class="mb-3">
+            <DxTextBox CssClass="w-100"
+                       NullText="Search by Name, Position or Department"
+                       Text="@_viewModel.SearchTerm"
+                       TextChanged="OnSearchTextChanged"
+                       BindValueMode="@BindValueMode.OnDelayedInput"
+                       InputDelay="250"
+                       Enabled="@(!_viewModel.IsLoading)" />
+        </div>
+
+        <div class="mb-3 d-flex align-items-end gap-3 flex-wrap">
+            <div>
+                <label class="form-label" for="page-size-combo">Page Size</label>
+                <DxComboBox Data="@PageSizes"
+                            TData="int"
+                            TValue="int"
+                            InputId="page-size-combo"
+                            @bind-Value="SelectedPageSize"
+                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Never"
+                            CssClass="page-size-combo"
+                            Enabled="@(!_viewModel.IsLoading)" />
+            </div>
+
+            <DxButton Text="Add New Employee"
+                      RenderStyle="ButtonRenderStyle.Primary"
+                      Enabled="@(!_viewModel.IsLoading)"
+                      Click="@_viewModel.AddEmployee" />
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && (_viewModel.Employees?.Any() ?? false))
+        {
+            <div class="alert alert-danger" role="alert">
+                @_viewModel.ErrorMessage
+            </div>
+        }
+
+        <DxLoadingPanel Visible="@_viewModel.IsLoading"
+                        IsContentBlocked="true"
+                        ApplyBackgroundShading="true"
+                        Text="Loading employees...">
+            @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && !(_viewModel.Employees?.Any() ?? false))
+            {
+                <p>Employee data is temporarily unavailable.</p>
+            }
+            else if (!(_viewModel.Employees?.Any() ?? false))
+            {
+                <p>No employees found.</p>
+            }
+            else
+            {
+                <DxGrid Data="@_viewModel.Employees"
+                        CssClass="mb-3">
+                    <Columns>
+                        <DxGridDataColumn FieldName="@nameof(EmployeeResponseDto.Id)" Caption="Id" />
+                        <DxGridDataColumn FieldName="@nameof(EmployeeResponseDto.Name)" Caption="Name" />
+                        <DxGridDataColumn FieldName="@nameof(EmployeeResponseDto.Position)" Caption="Position" />
+                        <DxGridDataColumn FieldName="@nameof(EmployeeResponseDto.Department)" Caption="Department" />
+                        <DxGridDataColumn FieldName="@nameof(EmployeeResponseDto.Salary)" Caption="Salary">
+                            <CellDisplayTemplate Context="cellContext">
+                                @{
+                                    var employee = (EmployeeResponseDto)cellContext.DataItem;
+                                }
+                                @(employee.Salary.HasValue? employee.Salary.Value.ToString("C") : "N/A")
+                            </CellDisplayTemplate>
+                        </DxGridDataColumn>
+                        <DxGridDataColumn Caption="Actions">
+                            <CellDisplayTemplate Context="cellContext">
+                                @{
+                                    var employee = (EmployeeResponseDto)cellContext.DataItem;
+                                }
+                                <div class="d-flex gap-2">
+                                    <DxButton Text="Edit"
+                                              RenderStyle="ButtonRenderStyle.Secondary"
+                                              RenderStyleMode="ButtonRenderStyleMode.Outline"
+                                              Enabled="@(!_viewModel.IsLoading)"
+                                              Click="@(() => _viewModel.EditEmployee(employee.Id))" />
+                                    <DxButton Text="Delete"
+                                              RenderStyle="ButtonRenderStyle.Danger"
+                                              RenderStyleMode="ButtonRenderStyleMode.Outline"
+                                              Enabled="@(!_viewModel.IsLoading)"
+                                              Click="@(() => ConfirmDelete(employee))" />
+                                </div>
+                            </CellDisplayTemplate>
+                        </DxGridDataColumn>
+                    </Columns>
+                </DxGrid>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>
+                        Showing @_viewModel.FirstItemNumber-@_viewModel.LastItemNumber of @_viewModel.TotalCount employees
+                        (page @_viewModel.CurrentPage of @_viewModel.TotalPages)
+                    </span>
+
+                    <DxPager PageCount="@_viewModel.TotalPages"
+                             @bind-ActivePageIndex="PagerActivePageIndex"
+                             NavigationMode="PagerNavigationMode.NumericButtons"
+                             VisibleNumericButtonCount="5" />
+                </div>
+            }
+        </DxLoadingPanel>
     </div>
-
-    <div class="mb-3 d-flex align-items-end gap-3 flex-wrap">
-        <div>
-            <label class="form-label">Page Size</label>
-            <DxComboBox Data="@PageSizes"
-                        TData="int"
-                        TValue="int"
-                        @bind-Value="SelectedPageSize"
-                        ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Never"
-                        CssClass="page-size-combo" />
-        </div>
-
-        <DxButton Text="Add New Employee"
-                  RenderStyle="ButtonRenderStyle.Primary"
-                  Click="@_viewModel.AddEmployee" />
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && (_viewModel.Employees?.Any() ?? false))
-    {
-        <div class="alert alert-danger" role="alert">
-            @_viewModel.ErrorMessage
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(_viewModel.ErrorMessage) && !(_viewModel.Employees?.Any() ?? false))
-    {
-        <p>Employee data is temporarily unavailable.</p>
-    }
-    else if (!(_viewModel.Employees?.Any() ?? false))
-    {
-        <p>No employees found.</p>
-    }
-    else
-    {
-        <DxGrid Data="@_viewModel.Employees"
-                CssClass="mb-3">
-            <Columns>
-                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Id)" Caption="Id" />
-                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Name)" Caption="Name" />
-                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Position)" Caption="Position" />
-                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Department)" Caption="Department" />
-                <DxGridDataColumn FieldName="@nameof(EmployeeViewModel.Salary)" Caption="Salary">
-                    <CellDisplayTemplate Context="cellContext">
-                        @{
-                            var employee = (EmployeeViewModel)cellContext.DataItem;
-                        }
-                        @(employee.Salary.HasValue ? employee.Salary.Value.ToString("C") : "N/A")
-                    </CellDisplayTemplate>
-                </DxGridDataColumn>
-                <DxGridDataColumn Caption="Actions">
-                    <CellDisplayTemplate Context="cellContext">
-                        @{
-                            var employee = (EmployeeViewModel)cellContext.DataItem;
-                        }
-                        <div class="d-flex gap-2">
-                            <DxButton Text="Edit"
-                                      RenderStyle="ButtonRenderStyle.Secondary"
-                                      RenderStyleMode="ButtonRenderStyleMode.Outline"
-                                      Click="@(() => _viewModel.EditEmployee(employee.Id))" />
-                            <DxButton Text="Delete"
-                                      RenderStyle="ButtonRenderStyle.Danger"
-                                      RenderStyleMode="ButtonRenderStyleMode.Outline"
-                                      Click="@(() => ConfirmDelete(employee))" />
-                        </div>
-                    </CellDisplayTemplate>
-                </DxGridDataColumn>
-            </Columns>
-        </DxGrid>
-
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span>
-                Showing @_viewModel.FirstItemNumber-@_viewModel.LastItemNumber of @_viewModel.TotalCount employees
-                (page @_viewModel.CurrentPage of @_viewModel.TotalPages)
-            </span>
-
-            <DxPager PageCount="@_viewModel.TotalPages"
-                     @bind-ActivePageIndex="PagerActivePageIndex"
-                     NavigationMode="PagerNavigationMode.NumericButtons"
-                     VisibleNumericButtonCount="5" />
-        </div>
-    }
 }
 else
 {
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="position-relative" style="min-height: 12rem;">
+        <DxLoadingPanel Visible="true"
+                        IsContentBlocked="true"
+                        ApplyBackgroundShading="false"
+                        Text="Loading...">
+        </DxLoadingPanel>
     </div>
 }
 
 @code {
     private EmployeeListViewModel? _viewModel;
     private static readonly IReadOnlyList<int> PageSizes = [5, 10, 20, 50];
-    private int _selectedPageSize = 10;
-    private int _pagerActivePageIndex;
+    private int SelectedPageSize
+    {
+        get => _viewModel?.PageSize ?? 10;
+        set
+        {
+            if (_viewModel is null || _viewModel.PageSize == value)
+                return;
+
+            _ = ApplyPageSize(value);
+        }
+    }
+
+    private int PagerActivePageIndex
+    {
+        get => _viewModel?.ActivePageIndex ?? 0;
+        set
+        {
+            if (_viewModel is null || _viewModel.ActivePageIndex == value)
+                return;
+
+            _ = LoadSelectedPage(value);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         _viewModel = new EmployeeListViewModel(this, client, Navigation, JSRuntime, employeeListLogger);
         await _viewModel.InitializeAsync(Navigation.Uri);
-        SyncPagerState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -158,44 +197,7 @@ else
             Value = value ?? string.Empty
         });
 
-        SyncPagerState();
         StateHasChanged();
-    }
-
-    private int SelectedPageSize
-    {
-        get => _selectedPageSize;
-        set
-        {
-            if (_selectedPageSize == value)
-                return;
-
-            _selectedPageSize = value;
-            _ = ApplyPageSize(value);
-        }
-    }
-
-    private int PagerActivePageIndex
-    {
-        get => _pagerActivePageIndex;
-        set
-        {
-            if (_pagerActivePageIndex == value)
-                return;
-
-            _pagerActivePageIndex = value;
-            _ = LoadSelectedPage(value);
-        }
-    }
-
-    private async Task ApplyPageSize(int newSize)
-    {
-        if (_viewModel is null)
-            return;
-
-        await _viewModel.SetPageSize(newSize);
-        SyncPagerState();
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadSelectedPage(int pageIndex)
@@ -204,11 +206,19 @@ else
             return;
 
         await _viewModel.GoToPage(pageIndex + 1);
-        SyncPagerState();
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task ConfirmDelete(EmployeeViewModel employee)
+    private async Task ApplyPageSize(int newSize)
+    {
+        if (_viewModel is null)
+            return;
+
+        await _viewModel.SetPageSize(newSize);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ConfirmDelete(EmployeeResponseDto employee)
     {
         if (_viewModel is null)
             return;
@@ -226,18 +236,6 @@ else
             return;
 
         await _viewModel.DeleteEmployee(employee.Id);
-
-        SyncPagerState();
         StateHasChanged();
     }
-
-    private void SyncPagerState()
-    {
-        if (_viewModel is null)
-            return;
-
-        _selectedPageSize = _viewModel.PageSize;
-        _pagerActivePageIndex = _viewModel.ActivePageIndex;
-    }
-
 }
