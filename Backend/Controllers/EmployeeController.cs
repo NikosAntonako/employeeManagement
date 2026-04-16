@@ -37,11 +37,6 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
     [HttpPost("Create")]
     public async Task<ActionResult<ApiResponse<EmployeeResponseDto>>> CreateAsync([FromBody] EmployeeDto employee)
     {
-        if (employee.Name == "abc")
-        {
-            return BadRequest(new ApiResponse<EmployeeResponseDto>(StatusCodes.Status400BadRequest, null, "forbidden operation"));
-        }
-
         var result = await employeeService.CreateAsync(employee);
         var response = new ApiResponse<EmployeeResponseDto>(StatusCodes.Status201Created, result);
 
